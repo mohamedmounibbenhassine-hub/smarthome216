@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Home Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Home Control</title>
+
+    <!-- PWA: installable, app-like on phones -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Home Control">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%233b82f6'/%3E%3Cpath fill='white' d='M256 112 96 248v152h96V296h128v104h96V248z'/%3E%3C/svg%3E">
+
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -1278,12 +1287,76 @@ body.role-pc    #view-btn      { display: none !important; }  /* PC doesn't view
 </head>
 <body>
 
+    <!-- ===================== PWA SETUP ===================== -->
+    <script>
+    (function PWASetup() {
+        const ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%233b82f6'/%3E%3Cpath fill='white' d='M256 112 96 248v152h96V296h128v104h96V248z'/%3E%3C/svg%3E";
+
+        // Build the manifest in-memory so no separate manifest.json file is needed.
+        const manifest = {
+            name: "Home Control",
+            short_name: "Home Control",
+            description: "Smart Home control dashboard",
+            start_url: ".",
+            scope: ".",
+            display: "standalone",
+            orientation: "portrait",
+            background_color: "#0f172a",
+            theme_color: "#3b82f6",
+            icons: [
+                { src: ICON, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+                { src: ICON, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+            ]
+        };
+        try {
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        } catch (e) { console.warn('[PWA] manifest setup failed', e); }
+
+        // Minimal service worker (registered from a blob) — required for installability.
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => self.clients.claim());
+                self.addEventListener('fetch', e => { /* network-first passthrough */ });
+            `;
+            try {
+                const swBlob = new Blob([swCode], { type: 'text/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+                    .then(() => console.log('[PWA] service worker registered'))
+                    .catch(err => console.warn('[PWA] SW registration failed', err));
+            } catch (e) { console.warn('[PWA] SW setup failed', e); }
+        }
+
+        // "Install app" button — appears on the login screen when the browser
+        // offers installation (Android/Chrome). iOS users use Share → Add to Home Screen.
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) {
+                btn.style.display = 'inline-flex';
+                btn.onclick = async () => {
+                    btn.style.display = 'none';
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                };
+            }
+        });
+    })();
+    </script>
+
     <!-- ===================== LOGIN GATE ===================== -->
     <div id="login-overlay">
         <div class="login-card">
             <div class="login-logo">
                 <i class="fa-solid fa-house-signal"></i>
-                <span>Smart Home</span>
+                <span>Home Control</span>
             </div>
             <p class="login-sub">Sign in to continue</p>
 
@@ -1296,6 +1369,9 @@ body.role-pc    #view-btn      { display: none !important; }  /* PC doesn't view
             <button id="login-btn" class="login-btn">
                 <i class="fa-solid fa-right-to-bracket"></i> Sign In
             </button>
+            <button id="pwa-install-btn" class="login-btn" style="display:none; background:var(--success); margin-top:0.6rem;">
+                <i class="fa-solid fa-download"></i> Install App
+            </button>
             <p id="login-error" class="login-error"></p>
         </div>
     </div>
@@ -1303,7 +1379,7 @@ body.role-pc    #view-btn      { display: none !important; }  /* PC doesn't view
     <header>
         <div class="logo-container">
             <i class="fa-solid fa-house-signal" style="font-size: 1.5rem; color: var(--primary);"></i>
-            <h1>Smart Home</h1>
+            <h1>Home Control</h1>
         </div>
         
         <div class="status-bar">
