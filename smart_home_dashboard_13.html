@@ -1,0 +1,3657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Default: Light Mode Theme Variables */
+    --bg-gradient: radial-gradient(circle at top right, #f8fafc, #cbd5e1);
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --card-border: rgba(15, 23, 42, 0.08);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --control-item-bg: rgba(0, 0, 0, 0.03);
+    --header-bg: rgba(255, 255, 255, 0.8);
+    --shadow-glass: 0 10px 30px rgba(15, 23, 42, 0.05);
+    --log-box-bg: rgba(0, 0, 0, 0.05);
+    
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    
+    --blur: blur(12px);
+    --transition: all 0.3s ease;
+}
+
+/* Dark Mode Override (Applied to body when active) */
+body.night-mode-theme {
+    --bg-gradient: radial-gradient(circle at top right, #1e1b4b, #020617);
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --control-item-bg: rgba(0, 0, 0, 0.2);
+    --header-bg: rgba(15, 23, 42, 0.8);
+    --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.5);
+    --log-box-bg: rgba(0, 0, 0, 0.25);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: var(--bg-gradient);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Header */
+header {
+    background: var(--header-bg);
+    backdrop-filter: var(--blur);
+    border-bottom: 1px solid var(--card-border);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-container h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.nav-status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.nav-status-item i {
+    font-size: 0.95rem;
+}
+
+.nav-status-item.safe {
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--success);
+}
+
+.nav-status-item.danger {
+    border-color: rgba(239, 68, 68, 0.4);
+    color: var(--danger);
+    animation: pulseDanger 1.5s infinite;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--warning);
+    box-shadow: 0 0 10px var(--warning);
+}
+
+.dot.connected {
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+.emergency-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.emergency-btn:hover {
+    background: var(--danger);
+    color: white;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.module-section {
+    margin-bottom: 4rem;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-header {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid rgba(255,255,255,0.05);
+    padding-bottom: 1rem;
+}
+
+.section-header h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Grid Layouts */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+/* Glassmorphism Cards */
+.card {
+    background: var(--card-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--card-border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-glass);
+    transition: var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 1rem;
+}
+
+.card-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Components */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--control-item-bg);
+    border-radius: 0.75rem;
+}
+
+/* Toggles */
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+/* Range Sliders */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    margin-top: -8px;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+/* Alerts and Indicators */
+.indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--card-border);
+    transition: var(--transition);
+}
+
+.indicator.safe {
+    border-color: var(--success);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.indicator.danger {
+    border-color: var(--danger);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+    animation: pulseDanger 1.5s infinite;
+}
+
+@keyframes pulseDanger {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.indicator i {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.indicator.danger i {
+    color: var(--danger);
+}
+
+.indicator.safe i {
+    color: var(--success);
+}
+
+/* Keypad Styles */
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    max-width: 250px;
+    margin: 0 auto;
+}
+
+.key-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+    font-size: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.key-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.key-btn:active {
+    transform: scale(0.95);
+    background: var(--primary);
+}
+
+.pin-display {
+    text-align: center;
+    font-size: 2rem;
+    letter-spacing: 0.5rem;
+    margin-bottom: 1rem;
+    min-height: 3rem;
+}
+
+/* Webcam feed */
+.video-container {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 1rem;
+    border: 1px solid var(--card-border);
+}
+
+#webcam-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.camera-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rec-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--danger);
+    border-radius: 50%;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Logs */
+.log-box {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    max-height: 150px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.log-entry {
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.25rem;
+}
+
+.log-time {
+    color: var(--text-muted);
+    margin-right: 0.5rem;
+}
+
+/* Custom Form Elements & Night Mode Button */
+.night-mode-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.night-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.night-mode-active {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: var(--warning) !important;
+    border-color: var(--warning) !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+
+
+/* Mini Cards styling for Overview Grid */
+.mini-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.25rem !important;
+}
+
+.mini-card-header h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mini-card .indicator {
+    width: 90px;
+    height: 90px;
+    padding: 0.75rem;
+}
+
+.mini-card .indicator i {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.mini-card .indicator span {
+    font-size: 0.75rem;
+}
+
+/* ============================================================
+   Registered Faces Panel
+   ============================================================ */
+.faces-panel {
+    width: 100%;
+}
+
+.faces-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.face-capture-preview {
+    position: relative;
+    width: 200px;
+    min-width: 200px;
+    height: 150px;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: rgba(0,0,0,0.15);
+    border: 2px dashed var(--card-border);
+    flex-shrink: 0;
+}
+
+#face-capture-live {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 0.75rem;
+    transform: scaleX(-1); /* mirror so it feels like a selfie view */
+}
+
+#face-capture-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none; /* shown only during capture */
+    border-radius: 0.75rem;
+}
+
+.face-capture-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.face-capture-placeholder i {
+    font-size: 2rem;
+}
+
+.face-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.face-input-group input[type="text"] {
+    background: var(--control-item-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+    padding: 0.65rem 1rem;
+    border-radius: 0.6rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.face-input-group input[type="text"]:focus {
+    border-color: var(--primary);
+}
+
+/* ── Multi-angle capture HUD ─────────────────────────────── */
+.pose-capture-hud {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--control-item-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 0.6rem;
+}
+
+.pose-step-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.pose-dots {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.pose-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(148,163,184,0.35);
+    border: 1px solid var(--card-border);
+    transition: var(--transition);
+}
+
+.pose-dot.active {
+    background: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+}
+
+.pose-dot.done {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.pose-bar {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148,163,184,0.25);
+    overflow: hidden;
+}
+
+.pose-bar-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--success);
+    transition: width 0.12s linear;
+}
+
+.pose-hint {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+.face-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.1rem;
+    border: none;
+    border-radius: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: 'Inter', sans-serif;
+}
+
+.primary-btn  { background: var(--primary);  color: #fff; }
+.success-btn  { background: var(--success);  color: #fff; }
+.danger-btn   { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+.primary-btn:hover  { filter: brightness(1.1); }
+.success-btn:hover  { filter: brightness(1.1); }
+.danger-btn:hover   { background: var(--danger); color: #fff; }
+
+.face-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.faces-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.faces-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1rem;
+}
+
+.faces-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.faces-empty i {
+    font-size: 2.5rem;
+    opacity: 0.4;
+}
+
+/* Individual Face Card */
+.face-card {
+    background: var(--control-item-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+    position: relative;
+}
+
+.face-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(59,130,246,0.15);
+}
+
+.face-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.face-card-info {
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.face-card-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.face-card-date {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.face-card-remove {
+    width: 100%;
+    padding: 0.45rem;
+    background: rgba(239,68,68,0.1);
+    color: var(--danger);
+    border: none;
+    border-top: 1px solid var(--card-border);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: var(--transition);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.face-card-remove:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+/* Snapshot flash animation */
+@keyframes snapFlash {
+    0%   { opacity: 0.9; }
+    100% { opacity: 0; }
+}
+
+.snap-flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    border-radius: 0.75rem;
+    pointer-events: none;
+    animation: snapFlash 0.3s ease-out forwards;
+}
+
+/* ============================================================
+   Floating Log Sidebar (Chat-style) */
+.log-sidebar {
+    position: fixed;
+    right: 2rem;
+    bottom: 2rem;
+    top: 90px; /* Sits below header */
+    width: 350px;
+    background: var(--card-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--card-border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-glass);
+    display: flex;
+    flex-direction: column;
+    z-index: 99;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.log-sidebar:hover {
+    border-color: var(--primary);
+}
+
+.sidebar-header {
+    background: var(--control-item-bg);
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-main);
+}
+
+.pulse-indicator {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--success);
+    animation: blink 1.5s infinite;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-content .log-box {
+    flex: 1;
+    background: var(--log-box-bg);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    overflow-y: auto;
+    max-height: none !important;
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--text-main);
+}
+
+.log-entry {
+    margin-bottom: 0.45rem;
+    word-break: break-word;
+}
+
+.log-time {
+    color: var(--text-muted);
+    margin-right: 0.35rem;
+    font-weight: 600;
+}
+
+/* Adjust main layout grid to prevent sidebar overlap */
+@media (min-width: 1200px) {
+    main {
+        padding-right: 400px !important; /* Spacing for the fixed sidebar */
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .status-bar {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+}
+
+/* Chat toggle button (mobile only) + close button (mobile only) */
+#log-toggle-btn {
+    display: none; /* hidden on desktop */
+    position: fixed;
+    left: 1.25rem;
+    bottom: 1.25rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    z-index: 1002;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, filter 0.2s;
+}
+#log-toggle-btn:hover { filter: brightness(1.1); }
+#log-toggle-btn:active { transform: scale(0.94); }
+
+.log-toggle-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+}
+
+.log-close-btn {
+    display: none; /* shown only on mobile */
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.4rem;
+}
+.log-close-btn:hover { color: var(--text-main); background: var(--control-item-bg); }
+
+@media (max-width: 1199px) {
+    .log-sidebar {
+        position: fixed;
+        left: 1rem;
+        right: 1rem;
+        bottom: 5.5rem;       /* sits just above the toggle button */
+        top: auto;
+        height: 55vh;
+        max-height: 420px;
+        width: auto;
+        z-index: 1001;
+
+        /* Collapsed (closed) by default on mobile, slides up when opened */
+        transform: translateY(120%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.28s ease, opacity 0.28s ease;
+    }
+
+    .log-sidebar.open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #log-toggle-btn { display: flex; }
+    .log-close-btn  { display: inline-flex; align-items: center; justify-content: center; }
+
+    /* No need to reserve right padding on mobile */
+    main { padding-right: 0 !important; }
+}
+
+/* ============================================================
+   Dual-Authentication Video HUD & Flash Overlay
+   ============================================================ */
+.video-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.door-auth-overlay {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.auth-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.auth-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.auth-dot.pending {
+    background: #f59e0b;
+    box-shadow: 0 0 6px #f59e0b;
+}
+
+.auth-dot.success {
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+
+.auth-dot.danger {
+    background: var(--danger);
+    box-shadow: 0 0 6px var(--danger);
+}
+
+.door-unlock-flash {
+    position: absolute;
+    inset: 0;
+    background: rgba(16, 185, 129, 0.95);
+    display: none; /* Controlled by JS */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 800;
+    z-index: 10;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.door-unlock-flash i {
+    font-size: 3rem;
+    animation: bounce 1s infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+
+/* ===================== LOGIN GATE ===================== */
+#login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-gradient);
+    padding: 1.5rem;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--card-bg, rgba(255,255,255,0.85));
+    border: 1px solid var(--card-border);
+    border-radius: 1rem;
+    padding: 2rem 1.75rem;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    backdrop-filter: blur(12px);
+}
+
+.login-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.login-logo i { color: var(--primary); }
+
+.login-sub {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0.35rem 0 1.5rem;
+}
+
+.login-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.login-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--control-item-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.6rem;
+    font-size: 0.95rem;
+    outline: none;
+    margin-bottom: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s;
+}
+.login-input:focus { border-color: var(--primary); }
+
+.login-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 0.6rem;
+    padding: 0.8rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: filter 0.2s;
+}
+.login-btn:hover { filter: brightness(1.1); }
+
+.login-error {
+    min-height: 1.1rem;
+    text-align: center;
+    color: var(--danger);
+    font-size: 0.85rem;
+    margin: 0.6rem 0 0;
+}
+
+.login-hint {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--card-border);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.login-hint b { color: var(--text-main); }
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 1rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: rgba(59,130,246,0.15);
+    color: var(--primary);
+    border: 1px solid rgba(59,130,246,0.3);
+}
+
+/* Role-based visibility: applied to <body> after login */
+body.role-pc .faces-panel { display: none !important; }
+
+/* Phone role: hide every dashboard section EXCEPT the door section
+   (which contains both Security Camera and Registered Faces). */
+body.role-phone #automation-section,
+body.role-phone #kitchen,
+body.role-phone #living { display: none !important; }
+/* On the phone, hide the PC-only broadcast button; keep things clean. */
+body.role-phone #broadcast-btn { display: none !important; }
+/* On the PC, hide the phone-only view button. */
+body.role-pc #view-btn { display: none !important; }
+
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <!-- ===================== LOGIN GATE ===================== -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fa-solid fa-house-signal"></i>
+                <span>Smart Home</span>
+            </div>
+            <p class="login-sub">Sign in to continue</p>
+
+            <label class="login-label" for="login-user">Username</label>
+            <input type="text" id="login-user" class="login-input" placeholder="Enter username" autocomplete="username">
+
+            <label class="login-label" for="login-pass">Password</label>
+            <input type="password" id="login-pass" class="login-input" placeholder="Enter password" autocomplete="current-password">
+
+            <button id="login-btn" class="login-btn">
+                <i class="fa-solid fa-right-to-bracket"></i> Sign In
+            </button>
+            <p id="login-error" class="login-error"></p>
+
+            <div class="login-hint">
+                <span><i class="fa-solid fa-desktop"></i> PC: <b>pc</b> / <b>pc123</b></span>
+                <span><i class="fa-solid fa-mobile-screen"></i> Phone: <b>phone</b> / <b>phone123</b></span>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo-container">
+            <i class="fa-solid fa-house-signal" style="font-size: 1.5rem; color: var(--primary);"></i>
+            <h1>Smart Home</h1>
+        </div>
+        
+        <div class="status-bar">
+            <div class="connection-status">
+                <div class="dot" id="db-status-dot"></div>
+                <span id="db-status-text">Connecting...</span>
+            </div>
+            
+            <!-- Door & Kitchen Navbar Statuses -->
+            <div class="nav-status-item" id="nav-door-status">
+                <i class="fa-solid fa-lock" id="nav-door-icon"></i>
+                <span id="nav-door-text">Door Locked</span>
+            </div>
+            <div class="nav-status-item safe" id="nav-kitchen-status">
+                <i class="fa-solid fa-shield-halved" id="nav-kitchen-icon"></i>
+                <span id="nav-kitchen-text">Kitchen Safe</span>
+            </div>
+            
+            <button class="night-mode-btn" id="night-mode-btn">
+                <i class="fa-solid fa-moon"></i> Dark Mode
+            </button>
+            <button class="emergency-btn" id="global-emergency-btn">
+                <i class="fa-solid fa-bell"></i> Alarm
+            </button>
+            <span id="role-badge" class="role-badge" style="display:none;"></span>
+            <button class="night-mode-btn" id="logout-btn" style="display:none;">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <main>
+
+
+        <!-- 🤖 Automation Rules Section -->
+        <section id="automation-section" class="module-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-robot"></i> Smart Automation</h2>
+            </div>
+            <div class="room-grid">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-shield-halved"></i> Safety & Access Automation</h3>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-item">
+                            <div>
+                                <span style="display:block; font-weight:600; font-size:0.95rem;">Auto-Ventilation on Hazard</span>
+                                <span style="display:block; font-size:0.8rem; color:var(--text-muted);">Fully open living room window on gas/smoke leak</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="auto-gas-window-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+
+        <!-- 🚪 Entrance Section -->
+        <section id="door" class="module-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-door-closed"></i> Entrance / Door Module</h2>
+            </div>
+            <div class="room-grid">
+                <!-- Camera & Status -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-video"></i> Security Camera</h3>
+                    </div>
+                    <div class="video-container">
+                        <div class="camera-overlay">
+                            <div class="rec-dot"></div> <span id="cam-mode-label">LIVE</span>
+                        </div>
+                        <video id="webcam-feed" autoplay playsinline muted></video>
+                        <img id="remote-frame" alt="Door camera" style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;">
+
+                        <!-- Dual-Auth HUD -->
+                        <div class="door-auth-overlay" id="door-auth-overlay">
+                            <div class="auth-row">
+                                <span class="auth-dot pending" id="auth-face-dot"></span>
+                                <span id="auth-face-txt">Face: Initializing...</span>
+                            </div>
+                            <div class="auth-row">
+                                <span class="auth-dot pending" id="auth-gesture-dot"></span>
+                                <span id="auth-gesture-txt">Gesture: Initializing...</span>
+                            </div>
+                        </div>
+
+                        <!-- Access Granted Flash -->
+                        <div class="door-unlock-flash" id="door-unlock-flash">
+                            <i class="fa-solid fa-lock-open"></i>
+                            <span>ACCESS GRANTED</span>
+                        </div>
+                    </div>
+
+                    <!-- Camera Streaming Controls (broadcast over Firebase, WAN-safe) -->
+                    <div style="margin-top: 1rem; display: flex; gap: 0.75rem; width: 100%;">
+                        <button id="broadcast-btn" class="face-btn primary-btn" style="flex:1; justify-content:center; font-size:0.9rem;">
+                            <i class="fa-solid fa-tower-broadcast"></i> Broadcast (Door PC)
+                        </button>
+                        <button id="view-btn" class="face-btn" style="flex:1; justify-content:center; font-size:0.9rem; background:var(--control-item-bg); border:1px solid var(--card-border); color:var(--text-main);">
+                            <i class="fa-solid fa-mobile-screen"></i> View Door Cam
+                        </button>
+                    </div>
+
+                    <div class="indicator safe" id="door-lock-ind" style="margin-top:1rem; flex-direction: row; height: auto; width: 100%; border-radius: 10px; gap: 10px;">
+                        <i class="fa-solid fa-lock" id="door-lock-icon"></i>
+                        <div>
+                            <div style="font-weight:bold" id="door-lock-txt">DOOR LOCKED</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">Servo Position: <span id="servo-pos-txt">20°</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Remote Unlock & Close Door Controls -->
+                    <div style="margin-top: 1rem; display: flex; gap: 0.75rem; width: 100%;">
+                        <button id="remote-unlock-btn" class="face-btn primary-btn" style="flex: 1; justify-content: center; font-size: 0.95rem; padding: 0.75rem;">
+                            <i class="fa-solid fa-lock-open"></i> Remote Unlock
+                        </button>
+                        <button id="manual-close-btn" class="face-btn danger-btn" style="flex: 1; justify-content: center; font-size: 0.95rem; padding: 0.75rem;">
+                            <i class="fa-solid fa-lock"></i> Close Door
+                        </button>
+                    </div>
+                </div>
+
+
+                <!-- Controls & Keypad -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-key"></i> Access Control</h3>
+                    </div>
+
+                    <!-- Step label -->
+                    <div id="pin-step-label" style="text-align:center; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">
+                        Enter current PIN to change it
+                    </div>
+
+                    <div class="pin-display" id="pin-display">____</div>
+
+                    <!-- Status message -->
+                    <div id="pin-status-msg" style="text-align:center; font-size:0.82rem; min-height:1.2rem; margin-bottom:0.4rem;"></div>
+
+                    <div class="keypad">
+                        <button class="key-btn" onclick="addPin('1')">1</button>
+                        <button class="key-btn" onclick="addPin('2')">2</button>
+                        <button class="key-btn" onclick="addPin('3')">3</button>
+                        <button class="key-btn" onclick="addPin('4')">4</button>
+                        <button class="key-btn" onclick="addPin('5')">5</button>
+                        <button class="key-btn" onclick="addPin('6')">6</button>
+                        <button class="key-btn" onclick="addPin('7')">7</button>
+                        <button class="key-btn" onclick="addPin('8')">8</button>
+                        <button class="key-btn" onclick="addPin('9')">9</button>
+                        <button class="key-btn" onclick="clearPin()" style="color:var(--warning)"><i class="fa-solid fa-delete-left"></i></button>
+                        <button class="key-btn" onclick="addPin('0')">0</button>
+                        <button class="key-btn" onclick="submitPin()" style="color:var(--success)"><i class="fa-solid fa-check"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registered Faces Row (full-width) -->
+            <div class="faces-panel card" style="margin-top: 2rem;">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-user-shield"></i> Registered Faces</h3>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">Multi-angle (front · left · right) door access identification</span>
+                </div>
+
+                <!-- Capture Controls -->
+                <div class="faces-controls">
+                    <div class="face-capture-preview">
+                        <video id="face-capture-live" autoplay playsinline muted></video>
+                        <canvas id="face-capture-canvas"></canvas>
+                        <div class="face-capture-placeholder" id="face-capture-placeholder">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>Starting camera preview…</span>
+                        </div>
+                    </div>
+                    <div class="face-input-group">
+                        <input type="text" id="face-name-input" placeholder="Enter person's name..." maxlength="30">
+
+                        <!-- Multi-angle capture guidance -->
+                        <div class="pose-capture-hud">
+                            <div class="pose-step-row">
+                                <span id="face-pose-step">3 angles: front · left · right</span>
+                                <div class="pose-dots">
+                                    <span class="pose-dot" id="pose-dot-front" title="Front"></span>
+                                    <span class="pose-dot" id="pose-dot-left"  title="Left"></span>
+                                    <span class="pose-dot" id="pose-dot-right" title="Right"></span>
+                                </div>
+                            </div>
+                            <div class="pose-bar"><div class="pose-bar-fill" id="face-pose-bar-fill"></div></div>
+                            <p id="face-pose-hint" class="pose-hint">Enter a name, then start capture and follow the prompts.</p>
+                        </div>
+
+                        <button id="face-snapshot-btn" class="face-btn primary-btn">
+                            <i class="fa-solid fa-camera"></i> Start Capture
+                        </button>
+                        <button id="face-register-btn" class="face-btn success-btn" style="display:none;" disabled>
+                            <i class="fa-solid fa-user-plus"></i> Register Face
+                        </button>
+                        <p id="face-status-msg" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;"></p>
+                    </div>
+                </div>
+
+                <!-- Registered Faces List -->
+                <div class="faces-list-header">
+                    <span id="faces-count-txt">0 registered faces</span>
+                    <button id="faces-clear-all-btn" class="face-btn danger-btn" style="display:none;">
+                        <i class="fa-solid fa-trash"></i> Clear All
+                    </button>
+                </div>
+                <div class="faces-grid" id="faces-grid">
+                    <!-- Face cards generated by JS -->
+                    <div class="faces-empty" id="faces-empty">
+                        <i class="fa-solid fa-users-slash"></i>
+                        <span>No faces registered yet</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🍳 Kitchen Section -->
+        <section id="kitchen" class="module-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-kitchen-set"></i> Kitchen Module</h2>
+            </div>
+            <div class="room-grid">
+                <!-- Sensors -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-tower-broadcast"></i> Safety Sensors</h3>
+                    </div>
+                    <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+                        <div class="indicator safe" id="kitchen-fire-ind" style="flex:1">
+                            <i class="fa-solid fa-fire"></i>
+                            <span>No Fire</span>
+                        </div>
+                        <div class="indicator safe" id="kitchen-gas-ind" style="flex:1">
+                            <i class="fa-solid fa-cloud"></i>
+                            <span>Gas OK</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Controls -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-sliders"></i> Appliances</h3>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-item">
+                            <span>Kitchen LED</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="kitchen-led-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="control-item">
+                            <span>Alarm Buzzer</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="kitchen-buzzer-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+
+        <!-- 🛋️ Living Room Section -->
+        <section id="living" class="module-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-couch"></i> Living Room Module</h2>
+            </div>
+            <div class="room-grid">
+                <!-- Lighting -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-lightbulb"></i> Smart Lighting</h3>
+                    </div>
+                    <div class="indicator" id="living-light-ind" style="background: rgba(255, 255, 255, 0.05); border:none;">
+                        <i class="fa-solid fa-lightbulb" id="living-light-icon" style="color:var(--text-muted); text-shadow: none; transition: 0.3s;"></i>
+                    </div>
+                    
+                    <div class="control-group" style="margin-top:2rem;">
+                        <div class="control-item">
+                            <span>Main Light Toggle</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="living-led-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="padding: 0 1rem;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.875rem;">
+                                <span>Brightness</span>
+                                <span id="living-brightness-val">100%</span>
+                            </div>
+                            <input type="range" id="living-brightness-slider" min="0" max="255" value="255">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Window Control -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-wind"></i> Window Control (Servo)</h3>
+                    </div>
+                    
+                    <div style="text-align:center; padding: 2rem 0;">
+                        <i class="fa-solid fa-window-maximize" id="window-icon" style="font-size: 5rem; color: var(--text-muted); transition: transform 0.5s;"></i>
+                        <div style="margin-top:1rem; font-weight:bold;">Angle: <span id="window-angle-val">0°</span></div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div style="padding: 0 1rem;">
+                            <input type="range" id="window-servo-slider" min="0" max="180" value="0">
+                            <div style="display:flex; justify-content:space-between; margin-top:0.5rem; font-size:0.8rem; color:var(--text-muted)">
+                                <span>0° (Closed)</span>
+                                <span>180° (Open)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 💬 Floating System Event Log (Chat-style sidebar) -->
+    <!-- Mobile chat-style toggle for System Events (bottom-left) -->
+    <button id="log-toggle-btn" aria-label="Toggle system events">
+        <i class="fa-solid fa-comments"></i>
+        <span class="log-toggle-badge" id="log-toggle-badge" style="display:none;">0</span>
+    </button>
+
+    <aside id="system-log-sidebar" class="log-sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fa-solid fa-comments"></i> System Events</h3>
+            <span class="pulse-indicator"></span>
+            <button id="log-close-btn" class="log-close-btn" aria-label="Close system events">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <div class="log-box" id="system-log">
+                <!-- Logs are prepended here -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- Face Recognition (face-api.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <!-- Hand Gesture (MediaPipe Hands) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+    // ===== firebase-config.js =====
+// firebase-config.js
+
+// Firebase configuration keys (using project ID from the ESP32 code)
+const firebaseConfig = {
+    apiKey: "AIzaSyDummyKeyForRealtimeDatabaseConnection", 
+    authDomain: "smart-home-ecbff.firebaseapp.com",
+    databaseURL: "https://smart-home-ecbff-default-rtdb.firebaseio.com",
+    projectId: "smart-home-ecbff",
+    storageBucket: "smart-home-ecbff.appspot.com",
+};
+
+// Initialize Firebase
+let database = null;
+let useFirebase = false;
+
+// Initialize if the databaseURL is set AND the Firebase SDK actually loaded.
+// Wrapped in try/catch + typeof guard so a blocked CDN or offline load can't
+// throw a ReferenceError that white-screens the whole page.
+try {
+    if (typeof firebase === 'undefined') {
+        console.warn("Firebase SDK not loaded (offline or CDN blocked). Running in DEMO MODE.");
+    } else if (firebaseConfig.databaseURL && !firebaseConfig.databaseURL.includes("YOUR_PROJECT_ID")) {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+        useFirebase = true;
+        console.log("Firebase initialized successfully! Connecting to: " + firebaseConfig.databaseURL);
+    } else {
+        console.warn("Firebase not configured. Running in DEMO MODE.");
+    }
+} catch (e) {
+    console.warn("Firebase init failed — running in DEMO MODE:", e);
+    database = null;
+    useFirebase = false;
+}
+
+
+    // ===== app.js =====
+// app.js
+
+// ===================== LOGIN & ROLE GATE =====================
+// NOTE: This is a presentation/role gate, NOT real security. Credentials
+// live in the page, so anyone viewing source can see them. For real auth,
+// use Firebase Auth on a server. This is fine for a demo/showcase.
+(function LoginGate() {
+    const USERS = {
+        pc:    { password: 'pc123',    role: 'pc',    label: 'PC · Security Camera' },
+        phone: { password: 'phone123', role: 'phone', label: 'Phone · User' },
+    };
+    const SESSION_KEY = 'smarthome_role';
+
+    const overlay  = document.getElementById('login-overlay');
+    const userIn   = document.getElementById('login-user');
+    const passIn   = document.getElementById('login-pass');
+    const loginBtn = document.getElementById('login-btn');
+    const errorEl  = document.getElementById('login-error');
+    const badge    = document.getElementById('role-badge');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    function applyRole(role, label) {
+        document.body.classList.remove('role-pc', 'role-phone');
+        document.body.classList.add('role-' + role);
+        overlay.style.display = 'none';
+        if (badge) {
+            badge.style.display = 'inline-flex';
+            badge.innerHTML = (role === 'pc'
+                ? '<i class="fa-solid fa-desktop"></i> '
+                : '<i class="fa-solid fa-mobile-screen"></i> ') + label;
+        }
+        if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+
+        // Kick off the per-role camera behavior once the streaming module
+        // and the webcam stream are ready.
+        startRoleCameras(role);
+    }
+
+    function startRoleCameras(role, attempt = 0) {
+        const cs = window.CameraStreaming;
+        const vid = document.getElementById('webcam-feed');
+        const streamReady = vid && vid.srcObject;
+
+        // Wait until both the streaming module and the camera stream exist.
+        if (!cs || (role === 'pc' && !streamReady)) {
+            if (attempt < 40) { // ~10s max
+                setTimeout(() => startRoleCameras(role, attempt + 1), 250);
+            }
+            return;
+        }
+
+        if (role === 'pc') {
+            // PC is the door camera source → auto-broadcast.
+            cs.startBroadcast();
+        } else if (role === 'phone') {
+            // Phone's Security Camera shows the PC's stream → auto-view.
+            // (Registered Faces keeps using the phone's own local camera.)
+            cs.startView();
+        }
+    }
+
+    function doLogin() {
+        const u = (userIn.value || '').trim().toLowerCase();
+        const p = passIn.value || '';
+        const acct = USERS[u];
+        if (!acct || acct.password !== p) {
+            errorEl.textContent = 'Invalid username or password.';
+            passIn.value = '';
+            passIn.focus();
+            return;
+        }
+        errorEl.textContent = '';
+        try { sessionStorage.setItem(SESSION_KEY, acct.role); } catch (_) {}
+        applyRole(acct.role, acct.label);
+        if (typeof logEvent === 'function') logEvent(`Signed in as ${acct.label}.`);
+    }
+
+    function doLogout() {
+        try { sessionStorage.removeItem(SESSION_KEY); } catch (_) {}
+        location.reload(); // cleanest way to reset all camera/stream state
+    }
+
+    loginBtn.addEventListener('click', doLogin);
+    passIn.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    userIn.addEventListener('keydown', e => { if (e.key === 'Enter') passIn.focus(); });
+    if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
+
+    // Restore an existing session (e.g. after a refresh) without re-typing.
+    let restored = null;
+    try { restored = sessionStorage.getItem(SESSION_KEY); } catch (_) {}
+    if (restored === 'pc' || restored === 'phone') {
+        const label = restored === 'pc' ? USERS.pc.label : USERS.phone.label;
+        applyRole(restored, label);
+    }
+})();
+
+
+const state = {
+    door: { locked: true, servoPos: 20, pir: false, pinRetries: 0 },
+    kitchen: { fire: false, gas: false, led: false, buzzer: false },
+    wc: { occupied: false, led: false, timer: null },
+    living: { led: false, brightness: 255, windowAngle: 0 },
+    automation: { motion_light: false, gas_open_window: false, autolock_delay: 0, night_mode: false }
+};
+
+let CORRECT_PIN = "1234";
+let settingNewPin = false;
+
+
+
+// --- Helper Functions ---
+function updateFirebase(path, value) {
+    if (typeof useFirebase !== 'undefined' && useFirebase && database) {
+        database.ref('smarthome/' + path).set(value);
+    }
+}
+
+function logEvent(message, type = 'info') {
+    const logBox = document.getElementById('system-log');
+    const time = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = `log-entry`;
+    let color = type === 'alert' ? 'var(--danger)' : (type === 'warn' ? 'var(--warning)' : 'var(--text-main)');
+    entry.innerHTML = `<span class="log-time">[${time}]</span> <span style="color:${color}">${message}</span>`;
+    logBox.prepend(entry);
+
+    // Notify the mobile chat toggle of a new event (badge bumps when closed)
+    if (typeof window.notifyLogEvent === 'function') window.notifyLogEvent();
+}
+
+// --- System Events: mobile chat-style toggle ---
+(function LogChatToggle() {
+    const sidebar   = document.getElementById('system-log-sidebar');
+    const toggleBtn = document.getElementById('log-toggle-btn');
+    const closeBtn  = document.getElementById('log-close-btn');
+    const badge     = document.getElementById('log-toggle-badge');
+    const icon      = toggleBtn ? toggleBtn.querySelector('i') : null;
+    if (!sidebar || !toggleBtn) return;
+
+    let unread = 0;
+
+    function isOpen() { return sidebar.classList.contains('open'); }
+
+    function clearBadge() {
+        unread = 0;
+        if (badge) badge.style.display = 'none';
+    }
+
+    function openLog() {
+        sidebar.classList.add('open');
+        if (icon) icon.className = 'fa-solid fa-xmark';
+        clearBadge();
+    }
+
+    function closeLog() {
+        sidebar.classList.remove('open');
+        if (icon) icon.className = 'fa-solid fa-comments';
+    }
+
+    function toggleLog() { isOpen() ? closeLog() : openLog(); }
+
+    toggleBtn.addEventListener('click', toggleLog);
+    if (closeBtn) closeBtn.addEventListener('click', closeLog);
+
+    // Badge: count events that arrive while the panel is closed (mobile only).
+    window.notifyLogEvent = function () {
+        const onMobile = window.matchMedia('(max-width: 1199px)').matches;
+        if (!onMobile || isOpen()) return;
+        unread++;
+        if (badge) {
+            badge.textContent = unread > 99 ? '99+' : String(unread);
+            badge.style.display = 'inline-block';
+        }
+    };
+})();
+
+// --- Webcam Logic (Door) ---
+const videoElement = document.getElementById('webcam-feed');
+
+window.addEventListener('load', async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoElement.srcObject = stream;
+
+        // Also feed the Registered Faces preview so it shows a live feed.
+        const facesLive = document.getElementById('face-capture-live');
+        if (facesLive) {
+            facesLive.srcObject = stream;
+            const ph = document.getElementById('face-capture-placeholder');
+            if (ph) ph.style.display = 'none';
+        }
+
+        logEvent('Camera started automatically.');
+    } catch (err) {
+        console.error("Error accessing webcam: ", err);
+        logEvent("Could not access webcam. Please check permissions.", "warn");
+        const ph = document.getElementById('face-capture-placeholder');
+        if (ph) ph.querySelector('span').textContent = 'Camera unavailable — check permissions';
+    }
+});
+
+// ==================== CAMERA STREAMING (snapshot over Firebase, WAN-safe) ====================
+// Door PC "broadcasts" downscaled JPEG frames to smarthome/camera; a phone/remote
+// browser "views" them. Adapted to this project's database + smarthome schema.
+(function CameraStreaming() {
+    const STREAM_FPS     = 3;     // frames per second to broadcast (1-4 sensible)
+    const STREAM_WIDTH   = 320;   // downscaled width (smaller = lighter/faster)
+    const STREAM_QUALITY = 0.4;   // JPEG quality 0.1-0.9 (lower = lighter)
+    const CAMERA_FB_PATH = 'smarthome/camera';
+
+    const broadcastBtn = document.getElementById('broadcast-btn');
+    const viewBtn      = document.getElementById('view-btn');
+    const modeLabel    = document.getElementById('cam-mode-label');
+    const remoteImg    = document.getElementById('remote-frame');
+    const video        = document.getElementById('webcam-feed');
+
+    if (!broadcastBtn || !viewBtn) return;
+
+    let broadcasting  = false;
+    let viewing       = false;
+    let broadcastTimer = null;
+    let viewRef       = null;
+    const streamCanvas = document.createElement('canvas');
+
+    function fbReady() {
+        return (typeof useFirebase !== 'undefined' && useFirebase && database);
+    }
+
+    // ---- Door PC: capture a frame and push to Firebase ----
+    function pushFrame() {
+        if (!video.srcObject || video.videoWidth === 0) return;
+        const w = STREAM_WIDTH;
+        const h = Math.round(w * video.videoHeight / video.videoWidth);
+        streamCanvas.width = w; streamCanvas.height = h;
+        streamCanvas.getContext('2d').drawImage(video, 0, 0, w, h);
+        const dataUrl = streamCanvas.toDataURL('image/jpeg', STREAM_QUALITY);
+        database.ref(CAMERA_FB_PATH).set({ frame: dataUrl, ts: Date.now() })
+            .catch(e => console.warn('[Camera] frame push failed', e));
+    }
+
+    function toggleBroadcast() {
+        if (!fbReady()) {
+            logEvent('Broadcast needs Firebase. Running in demo mode.', 'warn');
+            return;
+        }
+        broadcasting = !broadcasting;
+        broadcastBtn.style.background = broadcasting ? 'var(--success)' : 'var(--primary)';
+        broadcastBtn.innerHTML = broadcasting
+            ? '<i class="fa-solid fa-tower-broadcast"></i> Broadcasting…'
+            : '<i class="fa-solid fa-tower-broadcast"></i> Broadcast (Door PC)';
+        if (broadcasting) {
+            if (viewing) toggleView();   // can't view and broadcast at once
+            modeLabel.textContent = 'LIVE (broadcasting)';
+            broadcastTimer = setInterval(pushFrame, Math.round(1000 / STREAM_FPS));
+            logEvent('Camera broadcast started.');
+        } else {
+            clearInterval(broadcastTimer); broadcastTimer = null;
+            modeLabel.textContent = 'LIVE';
+            logEvent('Camera broadcast stopped.');
+        }
+    }
+
+    // ---- Phone / viewer: show the latest frame from Firebase ----
+    function toggleView() {
+        if (!fbReady()) {
+            logEvent('Door cam view needs Firebase. Running in demo mode.', 'warn');
+            return;
+        }
+        viewing = !viewing;
+        viewBtn.style.background = viewing ? 'var(--success)' : 'var(--control-item-bg)';
+        viewBtn.style.color = viewing ? '#fff' : 'var(--text-main)';
+        viewBtn.innerHTML = viewing
+            ? '<i class="fa-solid fa-mobile-screen"></i> Viewing…'
+            : '<i class="fa-solid fa-mobile-screen"></i> View Door Cam';
+        if (viewing) {
+            if (broadcasting) toggleBroadcast();
+            video.style.display     = 'none';   // hide local camera
+            remoteImg.style.display = 'block';  // show received frames
+            modeLabel.textContent   = 'DOOR CAM';
+            viewRef = database.ref(CAMERA_FB_PATH + '/frame');
+            viewRef.on('value', snap => {
+                const f = snap.val();
+                if (f) remoteImg.src = f;
+            });
+        } else {
+            if (viewRef) { viewRef.off(); viewRef = null; }
+            remoteImg.style.display = 'none';
+            video.style.display     = 'block';
+            modeLabel.textContent   = 'LIVE';
+        }
+    }
+
+    broadcastBtn.addEventListener('click', toggleBroadcast);
+    viewBtn.addEventListener('click', toggleView);
+
+    // Exposed so the login/role logic can auto-start the right mode per device.
+    window.CameraStreaming = {
+        startBroadcast() { if (!broadcasting) toggleBroadcast(); },
+        startView()      { if (!viewing)      toggleView(); },
+    };
+})();
+
+
+
+// --- PIN Change Logic (Access Control keypad) ---
+// States: 'VERIFY_CURRENT' → 'SET_NEW'
+let pinState    = 'VERIFY_CURRENT'; // waiting for current PIN
+let currentPin  = '';
+let newPinEntry = '';
+
+const pinDisplay   = document.getElementById('pin-display');
+const pinStepLabel = document.getElementById('pin-step-label');
+const pinStatusMsg = document.getElementById('pin-status-msg');
+
+function setPinStatus(msg, color = 'var(--text-muted)') {
+    if (pinStatusMsg) {
+        pinStatusMsg.textContent = msg;
+        pinStatusMsg.style.color = color;
+    }
+}
+
+function setPinStep(label) {
+    if (pinStepLabel) pinStepLabel.textContent = label;
+}
+
+function updatePinDisplay() {
+    const raw = pinState === 'SET_NEW' ? newPinEntry : currentPin;
+    const len = Math.max(4, raw.length);
+    pinDisplay.innerText = raw.padEnd(len, '_').split('').map(c => c === '_' ? '_' : '*').join('');
+}
+
+window.addPin = (num) => {
+    if (pinState === 'VERIFY_CURRENT' && currentPin.length < 8) {
+        currentPin += num;
+    } else if (pinState === 'SET_NEW' && newPinEntry.length < 8) {
+        newPinEntry += num;
+    }
+    updatePinDisplay();
+};
+
+window.clearPin = () => {
+    if (pinState === 'VERIFY_CURRENT') currentPin = '';
+    else newPinEntry = '';
+    setPinStatus('');
+    updatePinDisplay();
+};
+
+window.submitPin = () => {
+    if (pinState === 'VERIFY_CURRENT') {
+        // Step 1: verify current PIN
+        if (currentPin === CORRECT_PIN) {
+            pinState    = 'SET_NEW';
+            newPinEntry = '';
+            currentPin  = '';
+            setPinStep('Enter your NEW PIN (4–8 digits), then press ✓');
+            setPinStatus('✅ Current PIN verified. Enter your new PIN.', 'var(--success)');
+            pinDisplay.style.color = 'var(--text-main)';
+            updatePinDisplay();
+        } else {
+            pinDisplay.style.color = 'var(--danger)';
+            setPinStatus('❌ Wrong PIN. Try again.', 'var(--danger)');
+            setTimeout(() => {
+                pinDisplay.style.color = 'var(--text-main)';
+                currentPin = '';
+                setPinStatus('');
+                updatePinDisplay();
+            }, 1500);
+        }
+        return;
+    }
+
+    if (pinState === 'SET_NEW') {
+        // Step 2: save new PIN
+        if (newPinEntry.length >= 4 && newPinEntry.length <= 8) {
+            CORRECT_PIN = newPinEntry;
+            pinDisplay.style.color = 'var(--success)';
+            pinDisplay.innerText   = 'SAVED ✓';
+            setPinStatus('✅ New PIN saved successfully!', 'var(--success)');
+            logEvent('PIN code changed successfully.');
+            setTimeout(() => {
+                pinState    = 'VERIFY_CURRENT';
+                currentPin  = '';
+                newPinEntry = '';
+                pinDisplay.style.color = 'var(--text-main)';
+                setPinStep('Enter current PIN to change it');
+                setPinStatus('');
+                updatePinDisplay();
+            }, 2000);
+        } else {
+            pinDisplay.style.color = 'var(--warning)';
+            setPinStatus('⚠️ PIN must be 4–8 digits.', '#f59e0b');
+            setTimeout(() => {
+                pinDisplay.style.color = 'var(--text-main)';
+                newPinEntry = '';
+                setPinStatus('');
+                updatePinDisplay();
+            }, 1500);
+        }
+    }
+};
+
+
+function captureIntruderPhoto() {
+    if (videoElement.srcObject) {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            
+            // Format timestamp nicely for the filename
+            const date = new Date();
+            const timeStr = `${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}`;
+            link.download = `intruder_photo_${timeStr}.jpg`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            logEvent("Intruder photo captured and saved to your computer.", "alert");
+        } catch (e) {
+            console.error("Failed to capture photo: ", e);
+        }
+    } else {
+        logEvent("Could not take photo: Camera is not active.", "warn");
+    }
+}
+
+function unlockDoor() {
+    state.door.locked = false;
+    state.door.servoPos = 150;
+    
+    // Update UI
+    const ind = document.getElementById('door-lock-ind');
+    const icon = document.getElementById('door-lock-icon');
+    ind.className = 'indicator safe';
+    ind.style.borderColor = "var(--success)";
+    icon.className = 'fa-solid fa-door-open';
+    icon.style.color = "var(--success)";
+    document.getElementById('door-lock-txt').innerText = "DOOR UNLOCKED";
+    document.getElementById('servo-pos-txt').innerText = "150°";
+    
+    // Mini overview
+    const miniDoorInd = document.getElementById('mini-door-ind');
+    if (miniDoorInd) {
+        miniDoorInd.className = 'indicator safe';
+        miniDoorInd.innerHTML = '<i class="fa-solid fa-door-open"></i><span id="mini-door-txt">Unlocked</span>';
+    }
+    
+    // Navbar status
+    const navDoorText = document.getElementById('nav-door-text');
+    const navDoorIcon = document.getElementById('nav-door-icon');
+    const navDoorStatus = document.getElementById('nav-door-status');
+    if (navDoorText) navDoorText.innerText = "Door Unlocked";
+    if (navDoorIcon) {
+        navDoorIcon.className = "fa-solid fa-door-open";
+        navDoorIcon.style.color = "var(--success)";
+    }
+    if (navDoorStatus) {
+        navDoorStatus.className = "nav-status-item safe";
+    }
+    
+    updateFirebase('door/locked', false);
+    updateFirebase('door/servo', 150);
+    updateFirebase('door/remote_unlock', true); // Triggers the ESP32 hardware!
+    
+    const delayLabel = state.automation.autolock_delay === 0
+        ? 'never (manual close)'
+        : (state.automation.autolock_delay / 1000) + 's';
+    logEvent(`Door unlocked. Will close ${delayLabel}.`);
+    // Note: UI is updated when ESP32 writes back to Firebase after its auto-lock timer.
+    // Do NOT use setTimeout here — it would desync from the physical hardware.
+}
+
+function lockDoor() {
+    state.door.locked = true;
+    state.door.servoPos = 20;
+    
+    const ind = document.getElementById('door-lock-ind');
+    const icon = document.getElementById('door-lock-icon');
+    ind.className = 'indicator safe';
+    ind.style.borderColor = "var(--card-border)";
+    icon.className = 'fa-solid fa-lock';
+    icon.style.color = "var(--text-main)";
+    document.getElementById('door-lock-txt').innerText = "DOOR LOCKED";
+    document.getElementById('servo-pos-txt').innerText = "20°";
+    
+    const miniDoorInd = document.getElementById('mini-door-ind');
+    if (miniDoorInd) {
+        miniDoorInd.className = 'indicator safe';
+        miniDoorInd.innerHTML = '<i class="fa-solid fa-lock"></i><span id="mini-door-txt">Locked</span>';
+    }
+    
+    // Navbar status
+    const navDoorText = document.getElementById('nav-door-text');
+    const navDoorIcon = document.getElementById('nav-door-icon');
+    const navDoorStatus = document.getElementById('nav-door-status');
+    if (navDoorText) navDoorText.innerText = "Door Locked";
+    if (navDoorIcon) {
+        navDoorIcon.className = "fa-solid fa-lock";
+        navDoorIcon.style.color = "";
+    }
+    if (navDoorStatus) {
+        navDoorStatus.className = "nav-status-item";
+    }
+    
+    updateFirebase('door/locked', true);
+    updateFirebase('door/servo', 20);
+}
+
+document.getElementById('remote-unlock-btn').addEventListener('click', unlockDoor);
+
+
+
+// --- Kitchen Logic ---
+
+document.getElementById('kitchen-led-toggle').addEventListener('change', (e) => {
+    state.kitchen.led = e.target.checked;
+    logEvent(`Kitchen LED turned ${state.kitchen.led ? 'ON' : 'OFF'}.`);
+    updateFirebase('kitchen/led', state.kitchen.led);
+});
+
+// --- Audio Buzzer Implementation ---
+let audioCtx;
+let beepInterval;
+
+function handleBuzzerAudio(isOn) {
+    if (isOn) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        if (!beepInterval) {
+            beepInterval = setInterval(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = 800; // Alarm sound frequency
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                gain.gain.setValueAtTime(0.03, audioCtx.currentTime); // Volume (lowered)
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+                setTimeout(() => osc.stop(), 300);
+            }, 500);
+        }
+    } else {
+        if (beepInterval) {
+            clearInterval(beepInterval);
+            beepInterval = null;
+        }
+    }
+}
+
+document.getElementById('kitchen-buzzer-toggle').addEventListener('change', (e) => {
+    state.kitchen.buzzer = e.target.checked;
+    handleBuzzerAudio(state.kitchen.buzzer);
+    logEvent(`Manual Buzzer toggle: ${state.kitchen.buzzer ? 'ON' : 'OFF'}.`);
+    updateFirebase('kitchen/buzzer', state.kitchen.buzzer);
+
+    // When the user manually silences the alarm, reset the fire & gas indicators to safe
+    if (!state.kitchen.buzzer) {
+        state.kitchen.fire = false;
+        state.kitchen.gas  = false;
+
+        const fireInd = document.getElementById('kitchen-fire-ind');
+        if (fireInd) {
+            fireInd.className = 'indicator safe';
+            fireInd.querySelector('span').innerText = 'No Fire';
+        }
+        const gasInd = document.getElementById('kitchen-gas-ind');
+        if (gasInd) {
+            gasInd.className = 'indicator safe';
+            gasInd.querySelector('span').innerText = 'Gas OK';
+        }
+
+        // Reset navbar kitchen status
+        const navStatus = document.getElementById('nav-kitchen-status');
+        const navIcon   = document.getElementById('nav-kitchen-icon');
+        const navText   = document.getElementById('nav-kitchen-text');
+        if (navStatus) navStatus.className = 'nav-status-item safe';
+        if (navIcon)   navIcon.className   = 'fa-solid fa-shield-halved';
+        if (navText)   navText.innerText   = 'Kitchen Safe';
+
+        const miniInd = document.getElementById('mini-kitchen-ind');
+        if (miniInd) {
+            miniInd.className = 'indicator safe';
+            miniInd.innerHTML = '<i class="fa-solid fa-fire-burner"></i><span id="mini-kitchen-txt">Safe</span>';
+        }
+
+        logEvent('Alarm silenced manually. Indicators reset to safe.', 'info');
+    }
+});
+
+function triggerAlarm(msg) {
+    logEvent(msg, "alert");
+    state.kitchen.buzzer = true;
+    document.getElementById('kitchen-buzzer-toggle').checked = true;
+    handleBuzzerAudio(true);
+    updateFirebase('kitchen/buzzer', true);
+}
+
+function checkAndTurnOffBuzzer() {
+    if (!state.kitchen.fire && !state.kitchen.gas) {
+        state.kitchen.buzzer = false;
+        document.getElementById('kitchen-buzzer-toggle').checked = false;
+        handleBuzzerAudio(false);
+        updateFirebase('kitchen/buzzer', false);
+        logEvent("Safety restored. Buzzer deactivated.");
+    }
+}
+
+document.getElementById('global-emergency-btn').addEventListener('click', () => {
+    triggerAlarm("GLOBAL EMERGENCY TRIGGERED");
+});
+
+// --- WC Logic (Offline - Handled locally by Arduino Mega) ---
+
+/*
+document.getElementById('wc-led-toggle').addEventListener('change', (e) => {
+    state.wc.led = e.target.checked;
+    logEvent(`WC LED manually turned ${state.wc.led ? 'ON' : 'OFF'}.`);
+    updateFirebase('wc/led', state.wc.led);
+});
+*/
+
+// --- Living Room Logic ---
+const livingIcon = document.getElementById('living-light-icon');
+const miniLivingInd = document.getElementById('mini-living-ind');
+
+function updateLivingLight() {
+    if (state.living.led) {
+        let opacity = state.living.brightness / 255;
+        livingIcon.style.color = `rgba(255, 215, 0, ${opacity})`;
+        livingIcon.style.textShadow = `0 0 20px rgba(255, 215, 0, ${opacity})`;
+        
+        if (miniLivingInd) {
+            miniLivingInd.className = 'indicator safe';
+            miniLivingInd.innerHTML = '<i class="fa-solid fa-lightbulb" style="color:gold;"></i><span id="mini-living-txt">Lights On</span>';
+        }
+    } else {
+        livingIcon.style.color = "var(--text-muted)";
+        livingIcon.style.textShadow = "none";
+        
+        if (miniLivingInd) {
+            miniLivingInd.className = 'indicator';
+            miniLivingInd.innerHTML = '<i class="fa-regular fa-lightbulb"></i><span id="mini-living-txt">Lights Off</span>';
+        }
+    }
+    
+    updateFirebase('living/led', state.living.led);
+    updateFirebase('living/brightness', state.living.brightness);
+}
+
+document.getElementById('living-led-toggle').addEventListener('change', (e) => {
+    state.living.led = e.target.checked;
+    logEvent(`Living Room light turned ${state.living.led ? 'ON' : 'OFF'}.`);
+    updateLivingLight();
+});
+
+document.getElementById('living-brightness-slider').addEventListener('input', (e) => {
+    state.living.brightness = parseInt(e.target.value);
+    document.getElementById('living-brightness-val').innerText = Math.round((state.living.brightness / 255) * 100) + '%';
+    if (state.living.led) {
+        updateLivingLight();
+    }
+});
+
+// Log brightness only when user stops dragging
+document.getElementById('living-brightness-slider').addEventListener('change', (e) => {
+    logEvent(`Living Room brightness set to ${Math.round((state.living.brightness / 255) * 100)}%.`);
+});
+
+// Window Servo
+document.getElementById('window-servo-slider').addEventListener('input', (e) => {
+    state.living.windowAngle = parseInt(e.target.value);
+    document.getElementById('window-angle-val').innerText = state.living.windowAngle + '°';
+    
+    // Visual tilt
+    let tilt = (state.living.windowAngle / 180) * 45; // max 45 deg tilt visually
+    document.getElementById('window-icon').style.transform = `rotateY(${tilt}deg)`;
+    
+    updateFirebase('living/window', state.living.windowAngle);
+});
+
+// Log window angle only when user stops dragging
+document.getElementById('window-servo-slider').addEventListener('change', (e) => {
+    logEvent(`Living Room window servo set to ${state.living.windowAngle}°.`);
+});
+
+// --- Automation & Night Mode Controls ---
+document.getElementById('night-mode-btn')?.addEventListener('click', () => {
+    state.automation.night_mode = !state.automation.night_mode;
+    logEvent(`Theme toggled to ${state.automation.night_mode ? 'Dark Mode' : 'Light Mode'}.`);
+    
+    // Toggle locally for instant responsiveness (works offline/demo mode too)
+    const btn = document.getElementById('night-mode-btn');
+    if (btn) {
+        if (state.automation.night_mode) {
+            btn.classList.add('night-mode-active');
+            document.body.classList.add('night-mode-theme');
+            btn.innerHTML = '<i class="fa-solid fa-sun"></i> Light Mode';
+        } else {
+            btn.classList.remove('night-mode-active');
+            document.body.classList.remove('night-mode-theme');
+            btn.innerHTML = '<i class="fa-solid fa-moon"></i> Dark Mode';
+        }
+    }
+    
+    updateFirebase('automation/night_mode', state.automation.night_mode);
+});
+
+document.getElementById('auto-motion-light-toggle')?.addEventListener('change', (e) => {
+    state.automation.motion_light = e.target.checked;
+    logEvent(`Motion-activated light setting updated: ${state.automation.motion_light ? 'ENABLED' : 'DISABLED'}.`);
+    updateFirebase('automation/motion_light', state.automation.motion_light);
+});
+
+document.getElementById('auto-gas-window-toggle')?.addEventListener('change', (e) => {
+    state.automation.gas_open_window = e.target.checked;
+    logEvent(`Auto-ventilation on hazard setting updated: ${state.automation.gas_open_window ? 'ENABLED' : 'DISABLED'}.`);
+    updateFirebase('automation/gas_open_window', state.automation.gas_open_window);
+});
+
+// Manual "Close Door" button — always available
+document.getElementById('manual-close-btn')?.addEventListener('click', () => {
+    lockDoor();
+    updateFirebase('door/remote_lock', true); // Triggers ESP32 hardware to close
+    logEvent('🔒 Door closed via dashboard.', 'warn');
+});
+
+
+// --- Init Firebase Listeners (If Active) ---
+if (typeof useFirebase !== 'undefined' && useFirebase && database) {
+    document.getElementById('db-status-dot').className = 'dot connected';
+    document.getElementById('db-status-text').innerText = 'Connected to Firebase';
+    logEvent('Successfully connected to Firebase Realtime DB.', 'info');
+
+    // Suppress alarm auto-play during initial Firebase snapshot reads
+    let isInitialLoad = true;
+    setTimeout(() => { isInitialLoad = false; }, 2000);
+
+    // Immediately clear stale fire & buzzer states in Firebase on load
+    updateFirebase('kitchen/fire', false);
+    updateFirebase('kitchen/buzzer', false);
+    
+    // 1. Kitchen Fire Alert Listener
+    database.ref('smarthome/kitchen/fire').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.kitchen.fire) {
+                state.kitchen.fire = val;
+                updateKitchenSafetyNav();
+                const ind = document.getElementById('kitchen-fire-ind');
+                const miniInd = document.getElementById('mini-kitchen-ind');
+
+                if (val) {
+                    if (ind) {
+                        ind.className = 'indicator danger';
+                        ind.querySelector('span').innerText = "FIRE DETECTED!";
+                    }
+                    if (miniInd) {
+                        miniInd.className = 'indicator danger';
+                        miniInd.innerHTML = '<i class="fa-solid fa-fire"></i><span id="mini-kitchen-txt">FIRE!</span>';
+                    }
+                    if (!isInitialLoad) triggerAlarm("FIRE DETECTED IN KITCHEN!");
+                } else {
+                    if (ind) {
+                        ind.className = 'indicator safe';
+                        ind.querySelector('span').innerText = "No Fire";
+                    }
+                    if (miniInd && !state.kitchen.gas) {
+                        miniInd.className = 'indicator safe';
+                        miniInd.innerHTML = '<i class="fa-solid fa-fire-burner"></i><span id="mini-kitchen-txt">Safe</span>';
+                    }
+                    if (!isInitialLoad) logEvent("Fire sensor cleared.", "info");
+                    checkAndTurnOffBuzzer();
+                }
+            }
+        }
+    });
+
+    // 2. Kitchen Gas Leak Listener
+    database.ref('smarthome/kitchen/gas').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.kitchen.gas) {
+                state.kitchen.gas = val;
+                updateKitchenSafetyNav();
+                const ind = document.getElementById('kitchen-gas-ind');
+                const miniInd = document.getElementById('mini-kitchen-ind');
+
+                if (val) {
+                    if (ind) {
+                        ind.className = 'indicator danger';
+                        ind.querySelector('span').innerText = "GAS LEAK!";
+                    }
+                    if (miniInd) {
+                        miniInd.className = 'indicator danger';
+                        miniInd.innerHTML = '<i class="fa-solid fa-cloud"></i><span id="mini-kitchen-txt">GAS LEAK!</span>';
+                    }
+                    if (!isInitialLoad) triggerAlarm("GAS LEAK DETECTED IN KITCHEN!");
+                } else {
+                    if (ind) {
+                        ind.className = 'indicator safe';
+                        ind.querySelector('span').innerText = "Gas OK";
+                    }
+                    if (miniInd && !state.kitchen.fire) {
+                        miniInd.className = 'indicator safe';
+                        miniInd.innerHTML = '<i class="fa-solid fa-fire-burner"></i><span id="mini-kitchen-txt">Safe</span>';
+                    }
+                    if (!isInitialLoad) logEvent("Gas sensor cleared.", "info");
+                    checkAndTurnOffBuzzer();
+                }
+            }
+        }
+    });
+
+    // 3. Kitchen LED Command Listener
+    database.ref('smarthome/kitchen/led').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.kitchen.led) {
+                state.kitchen.led = val;
+                const toggle = document.getElementById('kitchen-led-toggle');
+                if (toggle) toggle.checked = val;
+                logEvent(`Kitchen LED updated to ${val ? 'ON' : 'OFF'}.`);
+            }
+        }
+    });
+
+    // 4. Kitchen Buzzer Alert Listener
+    database.ref('smarthome/kitchen/buzzer').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.kitchen.buzzer) {
+                state.kitchen.buzzer = val;
+                const toggle = document.getElementById('kitchen-buzzer-toggle');
+                if (toggle) toggle.checked = val;
+                // Never auto-play buzzer on page load — only respond to live changes
+                if (!isInitialLoad) {
+                    handleBuzzerAudio(val);
+                    logEvent(`Buzzer state updated to ${val ? 'ACTIVE' : 'INACTIVE'}.`);
+                }
+            }
+        }
+    });
+
+    // 5. Door Lock Status Listener — always reflects Firebase (hardware is source of truth)
+    database.ref('smarthome/door/locked').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            // Always update UI — no local state guard, so the display
+            // is always in sync with the physical ESP32 hardware.
+            state.door.locked = val;
+            const ind          = document.getElementById('door-lock-ind');
+            const icon         = document.getElementById('door-lock-icon');
+            const miniInd      = document.getElementById('mini-door-ind');
+            const textEl       = document.getElementById('door-lock-txt');
+            const servoEl      = document.getElementById('servo-pos-txt');
+            const navDoorText  = document.getElementById('nav-door-text');
+            const navDoorIcon  = document.getElementById('nav-door-icon');
+            const navDoorStatus= document.getElementById('nav-door-status');
+            
+            if (!val) { // ── UNLOCKED ──
+                state.door.servoPos = 150;
+                if (ind)  { ind.className  = 'indicator safe'; ind.style.borderColor = "var(--success)"; }
+                if (icon) { icon.className = 'fa-solid fa-door-open'; icon.style.color = "var(--success)"; }
+                if (textEl)  textEl.innerText  = "DOOR UNLOCKED";
+                if (servoEl) servoEl.innerText = "150°";
+                if (miniInd) {
+                    miniInd.className = 'indicator safe';
+                    miniInd.innerHTML = '<i class="fa-solid fa-door-open"></i><span id="mini-door-txt">Unlocked</span>';
+                }
+                if (navDoorText)   navDoorText.innerText = "Door Unlocked";
+                if (navDoorIcon)  { navDoorIcon.className = "fa-solid fa-door-open"; navDoorIcon.style.color = "var(--success)"; }
+                if (navDoorStatus)  navDoorStatus.className = "nav-status-item safe";
+                logEvent("✅ Door unlocked.");
+            } else { // ── LOCKED ──
+                state.door.servoPos = 20;
+                if (ind)  { ind.className  = 'indicator safe'; ind.style.borderColor = "var(--card-border)"; }
+                if (icon) { icon.className = 'fa-solid fa-lock'; icon.style.color = "var(--text-main)"; }
+                if (textEl)  textEl.innerText  = "DOOR LOCKED";
+                if (servoEl) servoEl.innerText = "20°";
+                if (miniInd) {
+                    miniInd.className = 'indicator safe';
+                    miniInd.innerHTML = '<i class="fa-solid fa-lock"></i><span id="mini-door-txt">Locked</span>';
+                }
+                if (navDoorText)   navDoorText.innerText = "Door Locked";
+                if (navDoorIcon)  { navDoorIcon.className = "fa-solid fa-lock"; navDoorIcon.style.color = ""; }
+                if (navDoorStatus)  navDoorStatus.className = "nav-status-item";
+                logEvent("🔒 Door locked.");
+            }
+        }
+    });
+
+    // 5b. Door Servo Position Listener — always fires, even for closed position (20°)
+    database.ref('smarthome/door/servo').on('value', (snapshot) => {
+        // Use 20 (locked angle) as default when Firebase value is null/missing
+        const val = (snapshot.val() !== null && snapshot.val() !== undefined)
+                    ? parseInt(snapshot.val())
+                    : 20;
+
+        state.door.servoPos = val;
+
+        // Update the text readout
+        const servoEl = document.getElementById('servo-pos-txt');
+        if (servoEl) servoEl.innerText = val + '\u00b0';
+
+        // Update a visual servo arc/needle if it exists in the HTML
+        const servoArc = document.getElementById('servo-arc-indicator');
+        if (servoArc) {
+            // Map 0-180° servo range onto a 0-180° CSS rotation
+            servoArc.style.transform = `rotate(${val}deg)`;
+        }
+
+        // Keep the lock/unlock icon in sync with the physical angle
+        const isLocked = val <= 50;  // anything below 50° is considered locked
+        const icon    = document.getElementById('door-lock-icon');
+        const textEl  = document.getElementById('door-lock-txt');
+        if (icon && textEl) {
+            if (isLocked) {
+                icon.className  = 'fa-solid fa-lock';
+                icon.style.color = 'var(--text-main)';
+                textEl.innerText = 'DOOR LOCKED';
+            } else {
+                icon.className  = 'fa-solid fa-door-open';
+                icon.style.color = 'var(--success)';
+                textEl.innerText = 'DOOR UNLOCKED';
+            }
+        }
+    });
+
+
+    // 6. Door PIR Movement Listener (Offline - Handled locally by Arduino Mega)
+    /*
+    database.ref('smarthome/door/pir').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.door.pir) {
+                state.door.pir = val;
+                const statusEl = document.getElementById('door-pir-status');
+                if (statusEl) {
+                    statusEl.innerText = val ? "Motion Detected!" : "No Motion";
+                    statusEl.style.color = val ? "var(--warning)" : "var(--text-muted)";
+                }
+                logEvent(val ? "Motion detected at entrance door!" : "Entrance doorway clear.", val ? "warn" : "info");
+            }
+        }
+    });
+    */
+
+    // 7. Door Wrong PIN Alert Listener (Keypad intrusion triggers webcam photo capture)
+    database.ref('smarthome/door/wrong_pin_alert').on('value', (snapshot) => {
+        if (snapshot.exists() && snapshot.val() === true) {
+            state.door.pinRetries++;
+            logEvent(`Failed PIN attempt from Keypad (${state.door.pinRetries}/3)`, "warn");
+            captureIntruderPhoto();
+            
+            if (state.door.pinRetries >= 3) {
+                triggerAlarm("Intrusion Alert: 3 failed PIN attempts at Keypad!");
+            }
+            
+            // Automatically reset wrong_pin_alert in Firebase
+            updateFirebase('door/wrong_pin_alert', false);
+        }
+    });
+
+    // 8. Bathroom (WC) Occupancy Listener (Offline - Handled locally by Arduino Mega)
+    /*
+    database.ref('smarthome/wc/occupied').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.wc.occupied) {
+                state.wc.occupied = val;
+                const ind = document.getElementById('wc-occ-ind');
+                const miniInd = document.getElementById('mini-wc-ind');
+                const txt = document.getElementById('wc-occ-txt');
+                const ledToggle = document.getElementById('wc-led-toggle');
+                
+                if (val) {
+                    if (ind) {
+                        ind.className = 'indicator danger';
+                        ind.style.borderColor = "var(--warning)";
+                        ind.style.boxShadow = "0 0 20px rgba(245, 158, 11, 0.3)";
+                        ind.style.animation = "none";
+                    }
+                    if (txt) txt.innerText = "Occupied";
+                    if (miniInd) {
+                        miniInd.className = 'indicator';
+                        miniInd.style.borderColor = "var(--warning)";
+                        miniInd.innerHTML = '<i class="fa-solid fa-user"></i><span id="mini-wc-txt">Occupied</span>';
+                    }
+                    if (ledToggle) ledToggle.checked = true;
+                    state.wc.led = true;
+                    logEvent("Bathroom is now occupied. Auto-LED ON.");
+                } else {
+                    if (ind) {
+                        ind.className = 'indicator safe';
+                        ind.style.boxShadow = "none";
+                    }
+                    if (txt) txt.innerText = "Vacant";
+                    if (miniInd) {
+                        miniInd.className = 'indicator safe';
+                        miniInd.innerHTML = '<i class="fa-regular fa-circle"></i><span id="mini-wc-txt">Vacant</span>';
+                    }
+                    if (ledToggle) ledToggle.checked = false;
+                    state.wc.led = false;
+                    logEvent("Bathroom is now vacant. Auto-LED OFF.");
+                }
+            }
+        }
+    });
+    */
+
+    // 9. Bathroom (WC) LED Listener (Offline - Handled locally by Arduino Mega)
+    /*
+    database.ref('smarthome/wc/led').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.wc.led) {
+                state.wc.led = val;
+                const toggle = document.getElementById('wc-led-toggle');
+                if (toggle) toggle.checked = val;
+                logEvent(`WC LED updated to ${val ? 'ON' : 'OFF'}.`);
+            }
+        }
+    });
+    */
+
+    // 10. Living Room LED State Listener
+    database.ref('smarthome/living/led').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.living.led) {
+                state.living.led = val;
+                const toggle = document.getElementById('living-led-toggle');
+                if (toggle) toggle.checked = val;
+                updateLivingLightUI();
+            }
+        }
+    });
+
+    // 11. Living Room Brightness Listener
+    database.ref('smarthome/living/brightness').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = parseInt(snapshot.val());
+            if (val !== state.living.brightness) {
+                state.living.brightness = val;
+                const slider = document.getElementById('living-brightness-slider');
+                const valText = document.getElementById('living-brightness-val');
+                if (slider) slider.value = val;
+                if (valText) valText.innerText = Math.round((val / 255) * 100) + '%';
+                updateLivingLightUI();
+            }
+        }
+    });
+
+    // 12. Living Room Window Servo Angle Listener
+    database.ref('smarthome/living/window').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = parseInt(snapshot.val());
+            if (val !== state.living.windowAngle) {
+                state.living.windowAngle = val;
+                const slider = document.getElementById('window-servo-slider');
+                const valText = document.getElementById('window-angle-val');
+                const icon = document.getElementById('window-icon');
+                
+                if (slider) slider.value = val;
+                if (valText) valText.innerText = val + '°';
+                if (icon) {
+                    let tilt = (val / 180) * 45;
+                    icon.style.transform = `rotateY(${tilt}deg)`;
+                }
+                logEvent(`Window angle updated to ${val}°.`);
+            }
+        }
+    });
+
+    // 13. Night Mode (Dark Mode) Listener
+    database.ref('smarthome/automation/night_mode').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.automation.night_mode) {
+                state.automation.night_mode = val;
+                const btn = document.getElementById('night-mode-btn');
+                if (btn) {
+                    if (val) {
+                        btn.classList.add('night-mode-active');
+                        document.body.classList.add('night-mode-theme');
+                        btn.innerHTML = '<i class="fa-solid fa-sun"></i> Light Mode';
+                    } else {
+                        btn.classList.remove('night-mode-active');
+                        document.body.classList.remove('night-mode-theme');
+                        btn.innerHTML = '<i class="fa-solid fa-moon"></i> Dark Mode';
+                    }
+                }
+                logEvent(`Theme updated to ${val ? 'Dark Mode' : 'Light Mode'} from database.`);
+            }
+        }
+    });
+
+    // 14. Motion Light Automation Listener
+    database.ref('smarthome/automation/motion_light').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.automation.motion_light) {
+                state.automation.motion_light = val;
+                const toggle = document.getElementById('auto-motion-light-toggle');
+                if (toggle) toggle.checked = val;
+                logEvent(`Comfort automation (Motion Lights) updated to ${val ? 'ON' : 'OFF'}.`);
+            }
+        }
+    });
+
+    // 15. Gas Window Automation Listener
+    database.ref('smarthome/automation/gas_open_window').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val !== state.automation.gas_open_window) {
+                state.automation.gas_open_window = val;
+                const toggle = document.getElementById('auto-gas-window-toggle');
+                if (toggle) toggle.checked = val;
+                logEvent(`Safety automation (Auto-Ventilation) updated to ${val ? 'ON' : 'OFF'}.`);
+            }
+        }
+    });
+
+    // 16. Autolock Delay — always write 0 (Never) to Firebase on connect
+    updateFirebase('automation/autolock_delay', 0);
+    state.automation.autolock_delay = 0;
+
+
+    // 17. Inside Button Pressed — physical push button inside the home (updates log & resets flag)
+    database.ref('smarthome/door/inside_btn_pressed').on('value', (snapshot) => {
+        if (snapshot.exists() && snapshot.val() === true) {
+            logEvent('🔒 Inside door button pressed — door state toggled.', 'warn');
+            // Reset Firebase flag
+            updateFirebase('door/inside_btn_pressed', false);
+        }
+    });
+}
+
+// Helper to update living light UI locally (avoids double write)
+function updateLivingLightUI() {
+    const livingIcon = document.getElementById('living-light-icon');
+    const miniLivingInd = document.getElementById('mini-living-ind');
+    
+    if (livingIcon) {
+        if (state.living.led) {
+            let opacity = state.living.brightness / 255;
+            livingIcon.style.color = `rgba(255, 215, 0, ${opacity})`;
+            livingIcon.style.textShadow = `0 0 20px rgba(255, 215, 0, ${opacity})`;
+            
+            if (miniLivingInd) {
+                miniLivingInd.className = 'indicator safe';
+                miniLivingInd.innerHTML = '<i class="fa-solid fa-lightbulb" style="color:gold;"></i><span id="mini-living-txt">Lights On</span>';
+            }
+        } else {
+            livingIcon.style.color = "var(--text-muted)";
+            livingIcon.style.textShadow = "none";
+            
+            if (miniLivingInd) {
+                miniLivingInd.className = 'indicator';
+                miniLivingInd.innerHTML = '<i class="fa-regular fa-lightbulb"></i><span id="mini-living-txt">Lights Off</span>';
+            }
+        }
+    }
+}
+
+// Helper to update kitchen safety in the navigation bar
+function updateKitchenSafetyNav() {
+    const navKitStatus = document.getElementById('nav-kitchen-status');
+    const navKitText = document.getElementById('nav-kitchen-text');
+    const navKitIcon = document.getElementById('nav-kitchen-icon');
+    
+    if (!navKitStatus || !navKitText || !navKitIcon) return;
+    
+    if (state.kitchen.fire || state.kitchen.gas) {
+        navKitStatus.className = "nav-status-item danger";
+        navKitIcon.className = "fa-solid fa-triangle-exclamation";
+        if (state.kitchen.fire && state.kitchen.gas) {
+            navKitText.innerText = "FIRE & GAS LEAK!";
+        } else if (state.kitchen.fire) {
+            navKitText.innerText = "FIRE DETECTED!";
+        } else {
+            navKitText.innerText = "GAS LEAK!";
+        }
+    } else {
+        navKitStatus.className = "nav-status-item safe";
+        navKitIcon.className = "fa-solid fa-shield-halved";
+        navKitText.innerText = "Kitchen Safe";
+    }
+}
+
+logEvent('Smart Home Dashboard initialized. Waiting for Firebase connection...');
+
+// =============================================================
+//  REGISTERED FACES MODULE
+// =============================================================
+(function FaceManager() {
+    const STORAGE_KEY = 'smarthome_registered_faces';
+    const canvas      = document.getElementById('face-capture-canvas');
+    const placeholder = document.getElementById('face-capture-placeholder');
+    const nameInput   = document.getElementById('face-name-input');
+    const snapBtn     = document.getElementById('face-snapshot-btn');
+    const regBtn      = document.getElementById('face-register-btn');
+    const statusMsg   = document.getElementById('face-status-msg');
+    const facesGrid   = document.getElementById('faces-grid');
+    const emptyState  = document.getElementById('faces-empty');
+    const countTxt    = document.getElementById('faces-count-txt');
+    const clearAllBtn = document.getElementById('faces-clear-all-btn');
+
+    // Multi-angle capture UI (added for front/left/right registration)
+    const poseStepTxt  = document.getElementById('face-pose-step');
+    const poseHintTxt  = document.getElementById('face-pose-hint');
+    const poseBarFill  = document.getElementById('face-pose-bar-fill');
+    const poseDots     = {
+        front: document.getElementById('pose-dot-front'),
+        left:  document.getElementById('pose-dot-left'),
+        right: document.getElementById('pose-dot-right'),
+    };
+
+    // Use the existing webcam feed (already started for security camera)
+    const webcamVideo = document.getElementById('webcam-feed');
+    const liveVideo   = document.getElementById('face-capture-live');
+
+    // ── Multi-angle capture config & state ────────────────────
+    const POSES      = ['front', 'left', 'right'];
+    const POSE_HOLD  = 800;   // ms the correct pose must be held to auto-capture
+    const POSE_HINTS = {
+        front: 'Look STRAIGHT at the camera',
+        left:  'Slowly turn your head to your LEFT',
+        right: 'Slowly turn your head to your RIGHT',
+    };
+
+    let capturing      = false;   // is an auto-capture session running?
+    let poseIndex      = 0;       // which pose we're capturing
+    let holdStart      = 0;       // when the correct pose first appeared
+    let capturedDesc   = [];      // collected descriptors {pose, descriptor}
+    let firstSnapshot  = null;    // dataURL of the front frame (used as the card image)
+    let captureTimer   = null;    // setTimeout handle for the capture loop
+
+    // ── Firebase helpers for face storage ─────────────────────
+    const FACES_FB_PATH = 'smarthome/faces';
+
+    // Sanitise name so it works as a Firebase key (no . # $ [ ])
+    function fbKey(name) {
+        return name.replace(/[\.\#\$\[\]]/g, '_');
+    }
+
+    // ── Load stored faces (localStorage cache) ─────────────────
+    function loadFaces() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch (_) { return []; }
+    }
+
+    // ── Save to localStorage AND Firebase ──────────────────────
+    function saveFaces(faces) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(faces));
+
+        // Mirror every face to Firebase
+        if (typeof useFirebase !== 'undefined' && useFirebase && database) {
+            const fbFaces = {};
+            faces.forEach(f => {
+                fbFaces[fbKey(f.name)] = {
+                    name:        f.name,
+                    img:         f.img,
+                    descriptors: f.descriptors || (f.descriptor ? [f.descriptor] : []),
+                    poses:       f.poses || [],
+                    date:        f.date,
+                    ts:          f.ts
+                };
+            });
+            database.ref(FACES_FB_PATH).set(fbFaces);
+        }
+    }
+
+    // ── Delete one face from Firebase by name ──────────────────
+    function deleteFaceFromFirebase(name) {
+        if (typeof useFirebase !== 'undefined' && useFirebase && database) {
+            database.ref(FACES_FB_PATH + '/' + fbKey(name)).remove();
+        }
+    }
+
+    // ── Clear all faces from Firebase ─────────────────────────
+    function clearFacesFromFirebase() {
+        if (typeof useFirebase !== 'undefined' && useFirebase && database) {
+            database.ref(FACES_FB_PATH).remove();
+        }
+    }
+
+    // ── Sync from Firebase on load (first fetch) ──────────────
+    if (typeof useFirebase !== 'undefined' && useFirebase && database) {
+        database.ref(FACES_FB_PATH).once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                const raw = snapshot.val();
+                const faces = Object.values(raw)
+                    .filter(f => f && f.name && (
+                        (Array.isArray(f.descriptors) && f.descriptors.length > 0) ||
+                        Array.isArray(f.descriptor)
+                    ))
+                    .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(faces));
+                renderFaces();
+                // Rebuild face matcher in face-auth.js
+                if (typeof FaceAuth !== 'undefined' && FaceAuth.rebuildFaceMatcher) {
+                    FaceAuth.rebuildFaceMatcher();
+                }
+                logEvent(`Loaded ${faces.length} face(s) from Firebase.`, 'info');
+            }
+        });
+    }
+
+    // ── Render all face cards ────────────────────────────────
+    function renderFaces() {
+        const faces = loadFaces();
+        // Clear existing cards (except empty state placeholder)
+        Array.from(facesGrid.querySelectorAll('.face-card')).forEach(c => c.remove());
+
+        emptyState.style.display = faces.length === 0 ? 'flex' : 'none';
+        countTxt.textContent = faces.length === 1 ? '1 registered face' : `${faces.length} registered faces`;
+        clearAllBtn.style.display = faces.length > 0 ? 'inline-flex' : 'none';
+
+        faces.forEach((face, idx) => {
+            const card = document.createElement('div');
+            card.className = 'face-card';
+            const angleCount = Array.isArray(face.descriptors) && face.descriptors.length
+                ? face.descriptors.length
+                : (Array.isArray(face.descriptor) ? 1 : 0);
+            const angleLabel = angleCount === 1 ? '1 angle' : `${angleCount} angles`;
+            card.innerHTML = `
+                <img src="${face.img}" alt="${escapeHtml(face.name)}" title="${escapeHtml(face.name)}">
+                <div class="face-card-info">
+                    <div class="face-card-name">${escapeHtml(face.name)}</div>
+                    <div class="face-card-date">${face.date} · ${angleLabel}</div>
+                </div>
+                <button class="face-card-remove" data-idx="${idx}">
+                    <i class="fa-solid fa-user-minus"></i> Remove
+                </button>`;
+            facesGrid.insertBefore(card, emptyState);
+        });
+    }
+
+    // ── Pose-step HUD helpers ─────────────────────────────────
+    function updatePoseUI(targetPose, detectedPose, heldRatio, faceFound) {
+        if (poseStepTxt) {
+            poseStepTxt.textContent = `Step ${poseIndex + 1}/${POSES.length}: capture ${targetPose.toUpperCase()}`;
+        }
+        if (poseHintTxt) {
+            if (!faceFound) {
+                poseHintTxt.textContent = 'No face detected — center your face in the preview';
+            } else if (detectedPose === targetPose) {
+                poseHintTxt.textContent = 'Hold still…';
+            } else {
+                const shown = detectedPose || 'transitioning';
+                poseHintTxt.textContent = `${POSE_HINTS[targetPose]} (now: ${shown})`;
+            }
+        }
+        if (poseBarFill) {
+            poseBarFill.style.width = `${Math.round(Math.min(heldRatio, 1) * 100)}%`;
+        }
+        // Mark dots: done = captured, active = current target
+        POSES.forEach((p, i) => {
+            const dot = poseDots[p];
+            if (!dot) return;
+            dot.classList.toggle('done',   i < poseIndex);
+            dot.classList.toggle('active', i === poseIndex);
+        });
+    }
+
+    function drawWebcamToCanvas() {
+        const ctx = canvas.getContext('2d');
+        canvas.width  = webcamVideo.videoWidth  || 320;
+        canvas.height = webcamVideo.videoHeight || 240;
+        // Mirror horizontally so it matches the live (selfie-style) preview.
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+
+    function snapFlash() {
+        const flash = document.createElement('div');
+        flash.className = 'snap-flash';
+        canvas.parentElement.appendChild(flash);
+        flash.addEventListener('animationend', () => flash.remove());
+    }
+
+    // Preview display modes: 'live' shows the continuous video,
+    // 'capture' shows the analysis canvas on top of it.
+    function showLivePreview() {
+        if (canvas) canvas.style.display = 'none';
+        if (liveVideo) liveVideo.style.display = 'block';
+        // Hide placeholder only if the live feed is actually running.
+        if (placeholder) {
+            placeholder.style.display =
+                (liveVideo && liveVideo.srcObject) ? 'none' : 'flex';
+        }
+    }
+
+    function showCapturePreview() {
+        if (canvas) canvas.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+    }
+
+    function resetCaptureSession() {
+        capturing     = false;
+        poseIndex     = 0;
+        holdStart     = 0;
+        capturedDesc  = [];
+        firstSnapshot = null;
+        if (captureTimer) { clearTimeout(captureTimer); captureTimer = null; }
+        snapBtn.disabled = false;
+        snapBtn.innerHTML = '<i class="fa-solid fa-camera"></i> Start Capture';
+        if (poseBarFill) poseBarFill.style.width = '0%';
+        Object.values(poseDots).forEach(d => d && d.classList.remove('active', 'done'));
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        showLivePreview();   // back to continuous live feed
+    }
+
+    // ── Start a multi-angle auto-capture session ──────────────
+    function startCapture() {
+        // If a session is running, treat the button as a cancel.
+        if (capturing) {
+            resetCaptureSession();
+            setStatus('Capture cancelled.', 'info');
+            return;
+        }
+
+        const name = nameInput.value.trim();
+        if (!name) {
+            setStatus('⚠️ Please enter a name first.', 'warning');
+            nameInput.focus();
+            return;
+        }
+        if (!webcamVideo || webcamVideo.readyState < 2) {
+            setStatus('⚠️ Camera not ready. Please wait a moment.', 'warning');
+            return;
+        }
+        if (typeof FaceAuth === 'undefined' || !FaceAuth.detectFaceWithPose) {
+            setStatus('⚠️ Security system is still loading models. Please wait.', 'warning');
+            return;
+        }
+        const faces = loadFaces();
+        if (faces.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+            setStatus(`⚠️ "${name}" is already registered. Use a different name.`, 'warning');
+            return;
+        }
+
+        capturing     = true;
+        poseIndex     = 0;
+        holdStart     = 0;
+        capturedDesc  = [];
+        firstSnapshot = null;
+        snapBtn.disabled  = false;
+        snapBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel Capture';
+        regBtn.disabled   = true;
+        showCapturePreview();
+        setStatus('🎥 Multi-angle capture started. Follow the on-screen prompts.', 'info');
+        captureLoop();
+    }
+
+    // ── The auto-capture loop (front → left → right) ──────────
+    async function captureLoop() {
+        if (!capturing) return;
+
+        // All poses captured → finalize.
+        if (poseIndex >= POSES.length) {
+            await finalizeCapture();
+            return;
+        }
+
+        const targetPose = POSES[poseIndex];
+        let detectedPose = null;
+        let faceFound    = false;
+        let descriptor   = null;
+
+        // Mirror the live frame into the preview canvas
+        drawWebcamToCanvas();
+
+        const det = await FaceAuth.detectFaceWithPose(webcamVideo);
+        if (det) {
+            faceFound    = true;
+            detectedPose = det.pose;
+            descriptor   = det.descriptor;
+        }
+
+        const onTarget = faceFound && detectedPose === targetPose && descriptor;
+        if (onTarget) {
+            if (holdStart === 0) holdStart = Date.now();
+            const held = Date.now() - holdStart;
+            updatePoseUI(targetPose, detectedPose, held / POSE_HOLD, faceFound);
+
+            if (held >= POSE_HOLD) {
+                // Capture this pose
+                capturedDesc.push({ pose: targetPose, descriptor });
+                if (targetPose === 'front') {
+                    firstSnapshot = canvas.toDataURL('image/jpeg', 0.8);
+                }
+                snapFlash();
+                logEvent(`Captured ${targetPose} angle for "${nameInput.value.trim()}".`, 'info');
+                poseIndex++;
+                holdStart = 0;
+            }
+        } else {
+            holdStart = 0;
+            updatePoseUI(targetPose, detectedPose, 0, faceFound);
+        }
+
+        captureTimer = setTimeout(captureLoop, 250);
+    }
+
+    // ── Finalize: save the multi-angle face ───────────────────
+    async function finalizeCapture() {
+        const name = nameInput.value.trim();
+        const descriptors = capturedDesc.map(c => c.descriptor);
+        const poses       = capturedDesc.map(c => c.pose);
+
+        if (descriptors.length === 0) {
+            setStatus('❌ Capture failed — no angles recorded. Try again.', 'warning');
+            resetCaptureSession();
+            return;
+        }
+
+        const faces = loadFaces();
+        const now = new Date();
+        const dateStr = now.toLocaleDateString(undefined, { day:'2-digit', month:'short', year:'numeric' });
+
+        faces.push({
+            name,
+            img: firstSnapshot || canvas.toDataURL('image/jpeg', 0.8),
+            descriptors,
+            poses,
+            date: dateStr,
+            ts: Date.now()
+        });
+        saveFaces(faces);
+
+        // Rebuild the matcher with the new multi-angle templates
+        FaceAuth.rebuildFaceMatcher();
+
+        nameInput.value = '';
+        resetCaptureSession();
+        setStatus(`✅ "${name}" registered with ${descriptors.length} angles (${poses.join(', ')}).`, 'success');
+        logEvent(`Face registered: ${name} (${poses.join(', ')})`);
+        renderFaces();
+    }
+
+    // ── Remove a single face ──────────────────────────────────
+    function removeFace(idx) {
+        const faces = loadFaces();
+        const removed = faces.splice(idx, 1);
+        saveFaces(faces);
+        if (removed.length) {
+            deleteFaceFromFirebase(removed[0].name);
+            logEvent(`Face removed: ${removed[0].name}`);
+        }
+
+        // Rebuild active face matcher list
+        if (typeof FaceAuth !== 'undefined' && FaceAuth.rebuildFaceMatcher) {
+            FaceAuth.rebuildFaceMatcher();
+        }
+
+        renderFaces();
+        setStatus(`"${removed[0]?.name}" has been removed.`, 'info');
+    }
+
+    // ── Clear all faces ───────────────────────────────────────
+    function clearAll() {
+        if (!confirm('Remove ALL registered faces? This cannot be undone.')) return;
+        localStorage.removeItem(STORAGE_KEY);
+        clearFacesFromFirebase();
+        logEvent('All registered faces cleared.');
+
+        // Rebuild active face matcher list
+        if (typeof FaceAuth !== 'undefined' && FaceAuth.rebuildFaceMatcher) {
+            FaceAuth.rebuildFaceMatcher();
+        }
+
+        renderFaces();
+        setStatus('All faces have been cleared.', 'info');
+    }
+
+    // ── Status helper ─────────────────────────────────────────
+    function setStatus(msg, type) {
+        statusMsg.textContent = msg;
+        const colors = { success: 'var(--success)', warning: '#f59e0b', info: 'var(--text-muted)' };
+        statusMsg.style.color = colors[type] || 'var(--text-muted)';
+        clearTimeout(setStatus._t);
+        setStatus._t = setTimeout(() => { statusMsg.textContent = ''; }, 5000);
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    }
+
+    // ── Event Listeners ───────────────────────────────────────
+    snapBtn.addEventListener('click', startCapture);
+    clearAllBtn.addEventListener('click', clearAll);
+
+    nameInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !capturing) startCapture();
+    });
+
+    facesGrid.addEventListener('click', e => {
+        const btn = e.target.closest('.face-card-remove');
+        if (!btn) return;
+        const idx = parseInt(btn.dataset.idx, 10);
+        removeFace(idx);
+    });
+
+    // Initial render
+    renderFaces();
+})();
+
+    // ===== face-auth.js (loads after app.js so logEvent & db exist) =====
+// =============================================================
+//  DUAL AUTHENTICATION — Face Recognition + High-Five Gesture
+//  ● face-api.js  → matches person against registered descriptors
+//                   (multi-angle: front + left + right per person)
+//  ● MediaPipe Hands → detects open-palm "high five" gesture
+//  Both must stay positive for CONFIRM_FRAMES consecutive checks
+//  before sending the UNLOCK command to Firebase.
+// =============================================================
+
+(function FaceAuthModule() {
+
+    // ── Config ────────────────────────────────────────────────
+    const STORAGE_KEY     = 'smarthome_registered_faces';
+    const MODEL_URL       = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
+    const MATCH_THRESHOLD = 0.65;   // Euclidean distance — higher is more lenient (default: 0.65, user wanted easier)
+    const FACE_INTERVAL   = 350;    // ms between face detection calls
+    const HAND_INTERVAL   = 120;    // ms between hand detection calls
+    const UNLOCK_COOLDOWN = 6000;   // ms before another unlock is allowed
+
+    // ── State ─────────────────────────────────────────────────
+    let modelsLoaded    = false;
+    let faceMatcher     = null;
+    let faceActiveStart = 0;        // Timestamp when face became successfully verified
+    let handActiveStart = 0;        // Timestamp when gesture became active (high five)
+    let lastMatchName   = '';
+    let cooldown        = false;
+
+    // ── DOM refs ──────────────────────────────────────────────
+    const authFaceDot    = document.getElementById('auth-face-dot');
+    const authFaceTxt    = document.getElementById('auth-face-txt');
+    const authGestureDot = document.getElementById('auth-gesture-dot');
+    const authGestureTxt = document.getElementById('auth-gesture-txt');
+    const unlockFlash    = document.getElementById('door-unlock-flash');
+
+    // ── UI helper ─────────────────────────────────────────────
+    function setUI(type, state, text) {
+        const dot  = type === 'face' ? authFaceDot  : authGestureDot;
+        const span = type === 'face' ? authFaceTxt  : authGestureTxt;
+        if (dot)  dot.className  = `auth-dot ${state}`;
+        if (span) span.textContent = text;
+    }
+
+    // ── Normalize a stored face into an array of descriptors ──
+    // Supports both the new multi-angle format (face.descriptors = [[...],[...]])
+    // and the legacy single-snapshot format (face.descriptor = [...]).
+    function getDescriptorList(face) {
+        if (Array.isArray(face.descriptors) && face.descriptors.length > 0) {
+            return face.descriptors.filter(d => Array.isArray(d) && d.length > 0);
+        }
+        if (Array.isArray(face.descriptor) && face.descriptor.length > 0) {
+            return [face.descriptor];
+        }
+        return [];
+    }
+
+    // ── Load registered faces that have at least one descriptor ──
+    function getFaces() {
+        try {
+            return (JSON.parse(localStorage.getItem(STORAGE_KEY)) || [])
+                   .filter(f => getDescriptorList(f).length > 0);
+        } catch (_) { return []; }
+    }
+
+    // ── Rebuild FaceMatcher from localStorage ─────────────────
+    function rebuildFaceMatcher() {
+        const faces = getFaces();
+        if (faces.length === 0) {
+            faceMatcher = null;
+            setUI('face', 'pending', 'Face: No faces registered');
+            return;
+        }
+        // Each person becomes one label with ALL their angle descriptors.
+        const labeled = faces.map(f =>
+            new faceapi.LabeledFaceDescriptors(
+                f.name,
+                getDescriptorList(f).map(d => new Float32Array(d))
+            )
+        );
+        faceMatcher = new faceapi.FaceMatcher(labeled, MATCH_THRESHOLD);
+        const totalDesc = faces.reduce((n, f) => n + getDescriptorList(f).length, 0);
+        console.log(`[FaceAuth] Matcher built with ${faces.length} face(s), ${totalDesc} angle descriptor(s).`);
+    }
+
+    // ── Extract 128-D descriptor from a canvas (for registration) ──
+    async function extractFaceDescriptor(canvasEl) {
+        if (!modelsLoaded) return null;
+        try {
+            const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
+            const result = await faceapi
+                .detectSingleFace(canvasEl, options)
+                .withFaceLandmarks(true)
+                .withFaceDescriptor();
+            return result ? Array.from(result.descriptor) : null;
+        } catch (e) {
+            console.warn('[FaceAuth] extractFaceDescriptor error:', e);
+            return null;
+        }
+    }
+
+    // ── Estimate head yaw (left/right turn) from 68 landmarks ──
+    // Compares nose tip x to the midpoint of the two eye outer corners,
+    // normalized by inter-eye distance. Returns a signed value:
+    //   ~0  -> facing forward
+    //   >0  -> turned toward viewer's right side of the frame
+    //   <0  -> turned toward viewer's left side of the frame
+    function estimateYaw(landmarks) {
+        try {
+            const leftEye  = landmarks.getLeftEye();   // points around left eye
+            const rightEye = landmarks.getRightEye();
+            const nose     = landmarks.getNose();      // nose bridge + tip
+
+            // Outer corners: leftEye[0] and rightEye[3] are the outer-most points
+            const lOuter = leftEye[0];
+            const rOuter = rightEye[3];
+            const noseTip = nose[nose.length - 1];
+
+            const eyeMidX = (lOuter.x + rOuter.x) / 2;
+            const eyeDist = Math.hypot(rOuter.x - lOuter.x, rOuter.y - lOuter.y);
+            if (eyeDist < 1e-3) return 0;
+
+            return (noseTip.x - eyeMidX) / eyeDist;
+        } catch (_) {
+            return 0;
+        }
+    }
+
+    // Yaw thresholds: how far the head must turn to count as a side pose.
+    const YAW_FRONT_MAX = 0.06;   // |yaw| below this = front
+    const YAW_SIDE_MIN  = 0.13;   // |yaw| above this = a side
+
+    function classifyPose(yaw) {
+        if (Math.abs(yaw) <= YAW_FRONT_MAX) return 'front';
+        if (yaw >=  YAW_SIDE_MIN) return 'right';
+        if (yaw <= -YAW_SIDE_MIN) return 'left';
+        return null; // transitional / ambiguous
+    }
+
+    // ── Live detection returning descriptor + detected pose ────
+    // Used by the auto-capture registration flow in app.js.
+    async function detectFaceWithPose(source) {
+        if (!modelsLoaded) return null;
+        try {
+            const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
+            const result = await faceapi
+                .detectSingleFace(source, options)
+                .withFaceLandmarks(true)
+                .withFaceDescriptor();
+            if (!result) return null;
+            const yaw = estimateYaw(result.landmarks);
+            return {
+                descriptor: Array.from(result.descriptor),
+                yaw,
+                pose: classifyPose(yaw),
+            };
+        } catch (e) {
+            console.warn('[FaceAuth] detectFaceWithPose error:', e);
+            return null;
+        }
+    }
+
+    // ── Continuous face-recognition loop ──────────────────────
+    async function faceLoop(video) {
+        if (video.readyState >= 2 && modelsLoaded) {
+            try {
+                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
+                const det = await faceapi
+                    .detectSingleFace(video, options)
+                    .withFaceLandmarks(true)
+                    .withFaceDescriptor();
+
+                if (det && faceMatcher) {
+                    const match = faceMatcher.findBestMatch(det.descriptor);
+                    if (match.label !== 'unknown') {
+                        if (faceActiveStart === 0) faceActiveStart = Date.now();
+                        lastMatchName = match.label;
+                        setUI('face', 'success', `Face: ✓ ${match.label}`);
+                    } else {
+                        faceActiveStart = 0;
+                        setUI('face', 'danger', 'Face: Not recognized');
+                    }
+                } else if (!faceMatcher) {
+                    faceActiveStart = 0;
+                    setUI('face', 'pending', 'Face: No faces registered');
+                } else {
+                    faceActiveStart = 0;
+                    setUI('face', 'pending', 'Face: Scanning...');
+                }
+            } catch (_) { faceActiveStart = 0; }
+        }
+        checkUnlock();
+        setTimeout(() => faceLoop(video), FACE_INTERVAL);
+    }
+
+    // ── High-Five detection (MediaPipe Hands) ─────────────────
+    // A "high five" = all 5 finger tips are above their base joints (MCP)
+    // In MediaPipe normalized y coords: smaller y = higher on screen
+    function isHighFive(landmarks) {
+        // tip indices:  thumb=4, index=8, middle=12, ring=16, pinky=20
+        // base indices: thumb=2, index=5, middle=9,  ring=13, pinky=17
+        const tips = [4, 8, 12, 16, 20];
+        const base = [2, 5,  9, 13, 17];
+        for (let i = 0; i < tips.length; i++) {
+            // require tip to be meaningfully above base
+            if (landmarks[tips[i]].y > landmarks[base[i]].y - 0.04) return false;
+        }
+        return true;
+    }
+
+    function initHandDetection(video) {
+        if (typeof Hands === 'undefined') {
+            console.warn('[FaceAuth] MediaPipe Hands not loaded — gesture disabled.');
+            setUI('gesture', 'danger', 'Gesture: Unavailable');
+            return;
+        }
+        const hands = new Hands({
+            locateFile: file =>
+                `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+        hands.setOptions({
+            maxNumHands:            1,
+            modelComplexity:        0,
+            minDetectionConfidence: 0.70,
+            minTrackingConfidence:  0.50
+        });
+        hands.onResults(results => {
+            const detected = results.multiHandLandmarks?.length > 0;
+            if (!detected) {
+                handActiveStart = 0;
+                setUI('gesture', 'pending', 'Gesture: Show open palm ✋');
+                return;
+            }
+            if (isHighFive(results.multiHandLandmarks[0])) {
+                if (handActiveStart === 0) handActiveStart = Date.now();
+                setUI('gesture', 'success', 'Gesture: ✋ High Five!');
+            } else {
+                handActiveStart = 0;
+                setUI('gesture', 'pending', 'Gesture: Open your palm');
+            }
+            checkUnlock();
+        });
+
+        // Send frames from the existing video stream — avoids double camera request
+        async function sendFrame() {
+            if (video.readyState >= 2) {
+                try { await hands.send({ image: video }); } catch (_) {}
+            }
+            setTimeout(sendFrame, HAND_INTERVAL);
+        }
+        sendFrame();
+    }
+
+    // ── Combined unlock logic ─────────────────────────────────
+    function checkUnlock() {
+        if (cooldown) return;
+
+        // Check if both face and hand gesture have been continuously active for at least 500ms
+        const faceOk = faceActiveStart > 0 && (Date.now() - faceActiveStart >= 500);
+        const handOk = handActiveStart > 0 && (Date.now() - handActiveStart >= 500);
+
+        if (faceOk && handOk) {
+            cooldown = true;
+            triggerUnlock();
+            setTimeout(() => {
+                cooldown        = false;
+                faceActiveStart = 0;
+                handActiveStart = 0;
+            }, UNLOCK_COOLDOWN);
+        }
+    }
+
+    function triggerUnlock() {
+        // 1. Trigger the dashboard's global unlockDoor function which updates UI and Firebase
+        if (typeof unlockDoor === 'function') {
+            unlockDoor();
+        } else if (typeof database !== 'undefined') {
+            // Fallback: direct Firebase write if app.js is not fully loaded
+            database.ref('smarthome/door/locked').set(false);
+            database.ref('smarthome/door/servo').set(150);
+            database.ref('smarthome/door/remote_unlock').set(true);
+        }
+
+        // 2. Access-granted flash overlay animation
+        if (unlockFlash) {
+            unlockFlash.style.display = 'flex';
+            setTimeout(() => { unlockFlash.style.display = 'none'; }, 3500);
+        }
+
+        // 3. Log event to chat sidebar
+        if (typeof logEvent === 'function') {
+            logEvent(`🔓 DUAL AUTHENTICATION GRANTED — Welcome back, ${lastMatchName}! (Face ID + High-Five)`);
+        }
+    }
+
+    // ── Model initialization ──────────────────────────────────
+    async function init() {
+        setUI('face',    'pending', 'Face: Loading models...');
+        setUI('gesture', 'pending', 'Gesture: Initializing...');
+
+        try {
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+            ]);
+            modelsLoaded = true;
+            console.log('[FaceAuth] Models loaded ✓');
+
+            rebuildFaceMatcher();
+
+            const video = document.getElementById('webcam-feed');
+
+            // Wait for webcam stream to be live before starting loops
+            function waitForVideo() {
+                if (video && video.readyState >= 2) {
+                    faceLoop(video);
+                    initHandDetection(video);
+                    setUI('gesture', 'pending', 'Gesture: Show open palm ✋');
+                } else {
+                    setTimeout(waitForVideo, 600);
+                }
+            }
+            waitForVideo();
+
+        } catch (err) {
+            console.error('[FaceAuth] Initialization failed:', err);
+            setUI('face',    'danger', 'Face: Model load failed');
+            setUI('gesture', 'danger', 'Gesture: Unavailable');
+        }
+    }
+
+    // Boot
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // ── Public API (used by FaceManager in app.js) ────────────
+    window.FaceAuth = { extractFaceDescriptor, detectFaceWithPose, rebuildFaceMatcher };
+
+})();
+
+    </script>
+</body>
+</html>
